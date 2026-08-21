@@ -491,12 +491,14 @@ app.post('/api/payu/initiate-custom-checkout', (req, res) => {
     const payuEnv = process.env.PAYU_ENV || 'production';
     const payuUrl = process.env.PAYU_ENDPOINT || (payuEnv === 'production' ? 'https://secure.payu.in/_payment' : 'https://test.payu.in/_payment');
     
-    // Determine callback origin
-    const origin = req.headers.origin || (req.headers.host ? `${req.protocol || 'https'}://${req.headers.host}` : (process.env.APP_URL || 'https://ykyash.in'));
-    const surl = `${origin}/api/payu/success`;
-    const furl = `${origin}/api/payu/failure`;
+    // Determine canonical HTTPS callback origin
+    const rawOrigin = req.headers.origin || (req.headers.host ? `https://${req.headers.host}` : '');
+    const originHost = (rawOrigin && rawOrigin.startsWith('https://')) ? rawOrigin : (process.env.APP_URL || 'https://ykyash.in');
+    const surl = `${originHost}/api/payu/success`;
+    const furl = `${originHost}/api/payu/failure`;
 
-    const txnid = 'YK_TXN_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
+    // PayU alphanumeric txnid without underscores to avoid rate-limit WAF triggers
+    const txnid = req.body.txnid || ('YK' + Date.now() + Math.floor(10000 + Math.random() * 90000));
     const formattedAmount = Number(amount).toFixed(2);
     const sanitizedProduct = String(productinfo).replace(/[^a-zA-Z0-9\s-_.]/g, '').slice(0, 100);
     const sanitizedFirstname = String(firstname).replace(/[^a-zA-Z0-9\s]/g, '').trim().slice(0, 50);

@@ -70,6 +70,7 @@ export function PayUCustomCheckoutModal({
   // Submit form directly to PayU Hosted Gateway (https://secure.payu.in/_payment)
   const handleProceedToPayUGateway = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
     setError(null);
 
     if (!customerName.trim()) {
@@ -92,7 +93,11 @@ export function PayUCustomCheckoutModal({
     setLoading(true);
 
     try {
+      // Generate a fresh unique alphanumeric txnid to prevent PayU rate limiting (Too many Requests)
+      const uniqueTxnid = 'YK' + Date.now() + Math.floor(10000 + Math.random() * 90000);
+
       const payload = {
+        txnid: uniqueTxnid,
         amount: item.priceINR,
         productinfo: item.title,
         firstname: customerName.trim(),
@@ -110,6 +115,7 @@ export function PayUCustomCheckoutModal({
             name: customerName,
             email: customerEmail,
             phone: customerPhone,
+            txnid: uniqueTxnid,
             productTitle: item.title,
             priceINR: item.priceINR,
             paymentMethod: 'payu_hosted_prebuilt',
@@ -139,6 +145,7 @@ export function PayUCustomCheckoutModal({
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = data.actionUrl || 'https://secure.payu.in/_payment';
+      form.target = '_self';
       form.style.display = 'none';
 
       Object.entries(data.payuParams || {}).forEach(([key, value]) => {
