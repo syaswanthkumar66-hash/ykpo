@@ -751,11 +751,16 @@ app.post('/api/payu/verify-payment', async (req, res) => {
       }
     }
 
+    const failureReason = transactionDetails.field9 || transactionDetails.error_Message || transactionDetails.unmappedstatus || null;
+
     res.json({
       success: true,
       verified: isVerified,
       txnid,
       status: paymentStatus,
+      reason: failureReason,
+      bankRefNum: transactionDetails.bank_ref_num || transactionDetails.mihpayid || null,
+      errorCode: transactionDetails.error || transactionDetails.error_code || null,
       details: transactionDetails
     });
   } catch (error: any) {
@@ -815,12 +820,28 @@ app.all('/api/payu/success', (req, res) => {
   }
 });
 
-// PayU Failure Callback Handler (Supports both POST callbacks and GET redirects)
+// PayU Failure Callback Handler (Extracts field9 and error_Message from PayU)
 app.all('/api/payu/failure', (req, res) => {
   const params = { ...req.query, ...req.body };
-  const { txnid = 'UNKNOWN', error_Message, unmappedstatus, msg } = params;
-  const reason = encodeURIComponent(String(error_Message || unmappedstatus || msg || 'Transaction was declined or cancelled.'));
+  const { txnid = 'UNKNOWN', field9, error_Message, unmappedstatus, msg, error } = params;
+  const reasonText = field9 || error_Message || unmappedstatus || msg || error || 'Transaction was declined or cancelled by bank.';
+  const reason = encodeURIComponent(String(reasonText));
   res.redirect(`/payment/failure?txnid=${txnid}&reason=${reason}`);
+});
+
+// PayU Webhook Handler (Asynchronous Webhook Push Event Listener)
+app.post('/api/payu/webhook', (req, res) => {
+  try {
+    const payload = { ...req.query, ...req.body };
+    const { txnid, status, field9, error_Message, bank_ref_num } = payload;
+    console.log(`[PayU Webhook Notification] TXN: ${txnid} Status: ${status} Reason: ${field9 || error_Message}`);
+    
+    // Acknowledge webhook receipt to PayU
+    res.status(200).json({ status: 'received', txnid });
+  } catch (err: any) {
+    console.error('PayU Webhook Error:', err);
+    res.status(500).json({ error: 'Webhook processing error' });
+  }
 });
 
 export default app;

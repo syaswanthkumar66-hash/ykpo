@@ -214,7 +214,7 @@ export default function PayUCustomCheckoutModal({
     }
   }, [isOpen, item]);
 
-  // Live Auto-Check Poller for Dynamic QR payments via PayU verify_payment
+  // Live Auto-Check Poller for Dynamic QR payments via PayU verify_payment (with field9 failure reason support)
   useEffect(() => {
     if (!isOpen || !activeTxnid || checkoutStep !== 'details' || paymentMethod !== 'upi' || upiSubMode !== 'qr') {
       return;
@@ -233,14 +233,26 @@ export default function PayUCustomCheckoutModal({
             clearInterval(checkInterval);
             onClose();
             navigate(`/payment/success?txnid=${activeTxnid}&amount=${item.priceINR}&product=${encodeURIComponent(item.title)}&customer=${encodeURIComponent(customerName || 'Valued Developer')}&email=${encodeURIComponent(customerEmail || '')}&status=success`);
+          } else if (result.status === 'failure' || result.details?.status === 'failure') {
+            clearInterval(checkInterval);
+            const failureReason = result.reason || result.details?.field9 || result.details?.error_Message || 'Payment was declined or cancelled by bank.';
+            setError(`Payment Failed: ${failureReason}`);
           }
         }
       } catch (pollErr) {
         // Silent catch for background polling
       }
-    }, 4000);
+    }, 3500);
 
-    return () => clearInterval(checkInterval);
+    // Timeout polling after 2 minutes (120 seconds)
+    const timeoutTimer = setTimeout(() => {
+      clearInterval(checkInterval);
+    }, 120000);
+
+    return () => {
+      clearInterval(checkInterval);
+      clearTimeout(timeoutTimer);
+    };
   }, [isOpen, activeTxnid, checkoutStep, paymentMethod, upiSubMode, customerName, customerEmail, item, navigate, onClose]);
 
   // Countdown timer
