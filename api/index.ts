@@ -717,8 +717,9 @@ app.post('/api/payu/verify-payment', async (req, res) => {
     const hashString = `${key}|verify_payment|${txnid}|${salt}`;
     const hash = crypto.createHash('sha512').update(hashString).digest('hex');
 
-    let paymentStatus = 'success';
-    let transactionDetails: any = { txnid, status: 'success' };
+    let paymentStatus = 'pending';
+    let transactionDetails: any = { txnid, status: 'pending' };
+    let isVerified = false;
 
     if (process.env.PAYU_MERCHANT_KEY && process.env.PAYU_MERCHANT_SALT) {
       try {
@@ -739,7 +740,10 @@ app.post('/api/payu/verify-payment', async (req, res) => {
           const data: any = await verifyRes.json();
           if (data && data.transaction_details && data.transaction_details[txnid]) {
             transactionDetails = data.transaction_details[txnid];
-            paymentStatus = transactionDetails.status || 'success';
+            paymentStatus = transactionDetails.status || 'pending';
+            if (paymentStatus === 'success' || transactionDetails.unmappedstatus === 'captured') {
+              isVerified = true;
+            }
           }
         }
       } catch (err) {
@@ -749,6 +753,7 @@ app.post('/api/payu/verify-payment', async (req, res) => {
 
     res.json({
       success: true,
+      verified: isVerified,
       txnid,
       status: paymentStatus,
       details: transactionDetails

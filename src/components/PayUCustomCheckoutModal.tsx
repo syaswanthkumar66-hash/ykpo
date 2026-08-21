@@ -393,32 +393,46 @@ export default function PayUCustomCheckoutModal({
     setVerifyingUpi(true);
     setError(null);
 
-    // Log verified payment to Firestore
     try {
-      if (db) {
-        await addDoc(collection(db, 'inquiries'), {
-          name: customerName || 'Verified Customer',
-          email: customerEmail || 'customer@instant-upi.in',
-          phone: customerPhone || '8309080424',
-          txnid: activeTxnid,
-          productTitle: item.title,
-          priceINR: item.priceINR,
-          paymentMethod: 'upi_direct',
-          status: 'success',
-          timestamp: new Date().toISOString(),
-          source: 'upi_direct_verified'
-        });
-      }
-    } catch (err) {
-      console.warn('Verification log:', err);
-    }
+      const response = await fetch('/api/payu/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ txnid: activeTxnid })
+      });
 
-    // Direct to success download page
-    setTimeout(() => {
+      const result = await response.json();
       setVerifyingUpi(false);
-      onClose();
-      navigate(`/payment/success?txnid=${activeTxnid}&amount=${item.priceINR}&product=${encodeURIComponent(item.title)}&customer=${encodeURIComponent(customerName || 'Valued Developer')}&email=${encodeURIComponent(customerEmail || '')}&status=success`);
-    }, 1000);
+
+      if (result.verified && (result.status === 'success' || result.details?.unmappedstatus === 'captured')) {
+        // Log verified payment to Firestore
+        try {
+          if (db) {
+            await addDoc(collection(db, 'inquiries'), {
+              name: customerName || 'Verified Customer',
+              email: customerEmail || 'customer@instant-upi.in',
+              phone: customerPhone || '8309080424',
+              txnid: activeTxnid,
+              productTitle: item.title,
+              priceINR: item.priceINR,
+              paymentMethod: 'upi_direct',
+              status: 'success',
+              timestamp: new Date().toISOString(),
+              source: 'upi_direct_verified'
+            });
+          }
+        } catch (err) {
+          console.warn('Verification log:', err);
+        }
+
+        onClose();
+        navigate(`/payment/success?txnid=${activeTxnid}&amount=${item.priceINR}&product=${encodeURIComponent(item.title)}&customer=${encodeURIComponent(customerName || 'Valued Developer')}&email=${encodeURIComponent(customerEmail || '')}&status=success`);
+      } else {
+        setError('Payment verification pending. We have not received payment confirmation from PayU yet. Please complete the transaction in your UPI app and click "Verify Payment" again, or click "Pay via PayU Gateway".');
+      }
+    } catch (err: any) {
+      setVerifyingUpi(false);
+      setError('Failed to query payment status. Please try again or use the PayU Gateway.');
+    }
   };
 
   // Complete Payment & Route
