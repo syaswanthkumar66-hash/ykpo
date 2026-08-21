@@ -408,14 +408,14 @@ app.post('/api/push/send', async (req, res) => {
 // PayU Custom Checkout (Merchant Hosted) Endpoints
 app.get('/api/payu/config', (req, res) => {
   const isConfigured = Boolean(process.env.PAYU_MERCHANT_KEY && process.env.PAYU_MERCHANT_SALT);
-  const payuEnv = process.env.PAYU_ENV || (process.env.PAYU_MERCHANT_KEY ? 'production' : 'test');
+  const payuEnv = process.env.PAYU_ENV || 'production';
   const payuUrl = process.env.PAYU_ENDPOINT || (payuEnv === 'production' ? 'https://secure.payu.in/_payment' : 'https://test.payu.in/_payment');
   
   res.json({
     configured: isConfigured,
     environment: payuEnv,
     endpoint: payuUrl,
-    merchantKey: process.env.PAYU_MERCHANT_KEY || 'gtKFFx',
+    merchantKey: process.env.PAYU_MERCHANT_KEY || '',
   });
 });
 
@@ -440,9 +440,9 @@ app.post('/api/payu/hash', (req, res) => {
       udf10 = "" 
     } = req.body;
 
-    const key = process.env.PAYU_MERCHANT_KEY || 'gtKFFx';
-    const salt = process.env.PAYU_MERCHANT_SALT || 'eCwWELxi';
-    const payuEnv = process.env.PAYU_ENV || (process.env.PAYU_MERCHANT_KEY ? 'production' : 'test');
+    const key = process.env.PAYU_MERCHANT_KEY || '';
+    const salt = process.env.PAYU_MERCHANT_SALT || '';
+    const payuEnv = process.env.PAYU_ENV || 'production';
     const payuUrl = process.env.PAYU_ENDPOINT || (payuEnv === 'production' ? 'https://secure.payu.in/_payment' : 'https://test.payu.in/_payment');
 
     const formattedAmount = Number(amount).toFixed(2);
@@ -486,9 +486,9 @@ app.post('/api/payu/initiate-custom-checkout', (req, res) => {
       return res.status(400).json({ error: 'Missing required checkout parameters (amount, productinfo, firstname, email).' });
     }
 
-    const key = process.env.PAYU_MERCHANT_KEY || 'gtKFFx';
-    const salt = process.env.PAYU_MERCHANT_SALT || 'eCwWELxi';
-    const payuEnv = process.env.PAYU_ENV || (process.env.PAYU_MERCHANT_KEY ? 'production' : 'test');
+    const key = process.env.PAYU_MERCHANT_KEY || '';
+    const salt = process.env.PAYU_MERCHANT_SALT || '';
+    const payuEnv = process.env.PAYU_ENV || 'production';
     const payuUrl = process.env.PAYU_ENDPOINT || (payuEnv === 'production' ? 'https://secure.payu.in/_payment' : 'https://test.payu.in/_payment');
     
     // Determine callback origin
@@ -581,9 +581,9 @@ app.post('/api/payu/s2s-upi-intent', async (req, res) => {
       return res.status(400).json({ error: 'Missing required parameters: amount, productinfo, firstname' });
     }
 
-    const key = process.env.PAYU_MERCHANT_KEY || 'gtKFFx';
-    const salt = process.env.PAYU_MERCHANT_SALT || 'eCwWELxi';
-    const payuEnv = process.env.PAYU_ENV || (process.env.PAYU_MERCHANT_KEY ? 'production' : 'test');
+    const key = process.env.PAYU_MERCHANT_KEY || '';
+    const salt = process.env.PAYU_MERCHANT_SALT || '';
+    const payuEnv = process.env.PAYU_ENV || 'production';
     const payuEndpoint = process.env.PAYU_ENDPOINT || (payuEnv === 'production' ? 'https://secure.payu.in/_payment' : 'https://test.payu.in/_payment');
 
     const origin = req.headers.origin || (req.headers.host ? `${req.protocol || 'https'}://${req.headers.host}` : (process.env.APP_URL || 'https://ykyash.in'));
@@ -707,9 +707,10 @@ app.post('/api/payu/verify-payment', async (req, res) => {
     const { txnid } = req.body;
     if (!txnid) return res.status(400).json({ error: 'Transaction ID (txnid) is required' });
 
-    const key = process.env.PAYU_MERCHANT_KEY || 'gtKFFx';
-    const salt = process.env.PAYU_MERCHANT_SALT || 'eCwWELxi';
-    const postserviceUrl = process.env.PAYU_ENV === 'production' 
+    const key = process.env.PAYU_MERCHANT_KEY || '';
+    const salt = process.env.PAYU_MERCHANT_SALT || '';
+    const payuEnv = process.env.PAYU_ENV || 'production';
+    const postserviceUrl = payuEnv === 'production' 
       ? 'https://info.payu.in/merchant/postservice.php?form=2' 
       : 'https://test.payu.in/merchant/postservice.php?form=2';
 
@@ -791,8 +792,8 @@ app.all('/api/payu/success', (req, res) => {
       udf5 = ""
     } = params;
 
-    const key = process.env.PAYU_MERCHANT_KEY || 'gtKFFx';
-    const salt = process.env.PAYU_MERCHANT_SALT || 'eCwWELxi';
+    const key = process.env.PAYU_MERCHANT_KEY || '';
+    const salt = process.env.PAYU_MERCHANT_SALT || '';
 
     // Verify reverse hash if salt and hash are present
     if (hash && salt && status) {

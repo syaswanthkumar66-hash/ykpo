@@ -80,7 +80,7 @@ QUICK SETUP INSTRUCTIONS:
 2. Run 'npm install' or 'bun install' to install peer dependencies.
 3. Configure environment variables in .env:
    VITE_PUBLIC_URL=https://ykyash.in
-   PAYU_MERCHANT_KEY=gtKFFx
+   PAYU_MERCHANT_KEY=your_production_merchant_key
 4. Run 'npm run dev' to launch local server.
 
 For priority engineering support:
