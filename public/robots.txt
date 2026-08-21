@@ -1,0 +1,30 @@
+# --------------------------------------------------
+# robots.txt for https://ykyash.in/
+# --------------------------------------------------
+
+# Global rules for all standard search engine crawlers (Googlebot, Bingbot, etc.)
+User-agent: *
+Allow: /
+
+# Prevent crawling of common private/administrative paths
+Disallow: /api/
+Disallow: /admin/
+Disallow: /private/
+Disallow: /login
+Disallow: /dashboard
+
+# Prevent crawling of specific configuration files
+Disallow: /*.json$
+Disallow: /*.md$
+
+# Explicitly allow important SEO files and paths
+Allow: /home
+Allow: /sitemap.xml
+Allow: /BingSiteAuth.xml
+Allow: /ae57ce385ecd4e26bbced6e16f93a4a6.txt
+
+# Host directive (specifically useful for Yandex, an IndexNow partner)
+Host: https://ykyash.in
+
+# XML Sitemap Location
+Sitemap: https://ykyash.in/sitemap.xml

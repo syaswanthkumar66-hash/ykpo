@@ -1,0 +1,8 @@
+{
+  "name": "YK Yash Portfolio & Store",
+  "description": "Production-ready personal portfolio and Digital Products Store for S. Yaswanth Kumar (YK Yash) on ykyash.in with PayU merchant compliance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

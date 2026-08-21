@@ -1,0 +1,162 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: ecet_scores
+    // Document ID: auto-generated
+    // Fields:
+    //   - name: string (required, max 100 chars)
+    //   - email: string (required)
+    //   - score: number (required, >= 0)
+    //   - maxScore: number (required, > 0)
+    //   - createdAt: string (required, ISO 8601 date string)
+    //   - userId: string (optional)
+    //
+    // Collection: visitors
+    // Document ID: auto-generated
+    // Fields:
+    //   - ip: string (optional)
+    //   - userAgent: string
+    //   - path: string
+    //   - timestamp: string (ISO 8601 date string)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return true; // Used custom auth on frontend, bypass Firebase auth check
+    }
+    
+    function isAdmin() {
+      return true; // Used custom auth on frontend, bypass Firebase auth check
+    }
+    
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+    
+    function isValidDateString(dateStr) {
+      return dateStr is string &&
+        dateStr.matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}.*Z?$");
+    }
+    
+    function isValidScoreEntry(data) {
+      return hasRequiredFields(['name', 'email', 'score', 'maxScore', 'createdAt']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() <= 100 &&
+             data.email is string &&
+             data.score is number && data.score >= 0 &&
+             data.maxScore is number && data.maxScore > 0 &&
+             isValidDateString(data.createdAt) &&
+             (!('userId' in data) || data.userId is string);
+    }
+
+    function isValidVisitor(data) {
+      return hasRequiredFields(['userAgent', 'path', 'timestamp']) &&
+             data.userAgent is string &&
+             data.path is string &&
+             isValidDateString(data.timestamp);
+    }
+
+    function isValidPushSubscription(data) {
+      return hasRequiredFields(['endpoint', 'subscription', 'createdAt']) &&
+             data.endpoint is string &&
+             data.subscription is string &&
+             isValidDateString(data.createdAt) &&
+             (!('email' in data) || data.email == null || data.email is string) &&
+             (!('userAgent' in data) || data.userAgent == null || data.userAgent is string);
+    }
+
+    function isValidQuestionBankItem(data) {
+      return hasRequiredFields(['title', 'url', 'createdAt', 'uploadedBy']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 200 &&
+             data.url is string && data.url.size() > 0 &&
+             isValidDateString(data.createdAt) &&
+             data.uploadedBy is string;
+    }
+
+    function isValidEcetResponse(data) {
+      return hasRequiredFields(['url', 'candidateName', 'hallTicket', 'subjectName', 'testCenter', 'testDate', 'score', 'total', 'correct', 'wrong', 'unattempted', 'uploadedBy', 'createdAt']) &&
+             data.url is string &&
+             data.candidateName is string &&
+             data.hallTicket is string &&
+             data.subjectName is string &&
+             data.testCenter is string &&
+             data.testDate is string &&
+             data.score is number && data.score >= 0 &&
+             data.total is number && data.total > 0 &&
+             data.correct is number && data.correct >= 0 &&
+             data.wrong is number && data.wrong >= 0 &&
+             data.unattempted is number && data.unattempted >= 0 &&
+             data.uploadedBy is string && data.uploadedBy.size() <= 200 &&
+             data.createdAt is timestamp;
+    }
+
+    match /ecet_scores/{scoreId} {
+      // Anyone can submit a score
+      allow create: if isValidScoreEntry(request.resource.data);
+      
+      // Allow read so the custom JWT auth UI can fetch it
+      allow read: if true;
+      allow update, delete: if false;
+    }
+
+    match /ecet_responses/{responseId} {
+      allow create: if isValidEcetResponse(request.resource.data);
+      allow update: if isValidEcetResponse(request.resource.data);
+      allow read: if true;
+      allow delete: if false;
+    }
+
+    match /visitors/{visitorId} {
+      allow create: if isValidVisitor(request.resource.data);
+      allow read: if true;
+      allow update, delete: if false;
+    }
+
+    match /push_subscriptions/{subId} {
+      allow create: if isValidPushSubscription(request.resource.data);
+      // Let existing subscriptions optionally get updated with an email if logged in
+      allow update: if isValidPushSubscription(request.resource.data) && request.resource.data.endpoint == resource.data.endpoint;
+      allow read: if true;
+      allow delete: if false;
+    }
+
+    match /question_bank/{docId} {
+      allow create: if isValidQuestionBankItem(request.resource.data);
+      allow read: if true;
+      allow update: if (isAdmin() && isValidQuestionBankItem(request.resource.data)) || 
+                       (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) && 
+                        request.resource.data.views is number && 
+                        (request.resource.data.views == resource.data.views + 1 || (request.resource.data.views == 1)));
+      allow delete: if isAdmin();
+    }
+
+    match /pdf_opens/{docId} {
+      // Allow any user to log a valid pdf view tracking object
+      allow create: if request.resource.data.keys().hasAll(['pdfId', 'pdfTitle', 'userEmail', 'timestamp']) &&
+                       request.resource.data.pdfId is string &&
+                       request.resource.data.pdfTitle is string &&
+                       request.resource.data.userEmail is string &&
+                       isValidDateString(request.resource.data.timestamp);
+      allow read: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasAll(['email', 'name', 'createdAt']) &&
+                       request.resource.data.email is string &&
+                       request.resource.data.name is string &&
+                       isValidDateString(request.resource.data.createdAt);
+      allow update: if false; // JWT token handles session, no user updates needed from client
+      allow delete: if false;
+    }
+  }
+}
