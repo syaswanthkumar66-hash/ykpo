@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { 
-  CheckCircle, 
+  CheckCircle2, 
   XCircle, 
   Download, 
   ArrowLeft, 
@@ -9,19 +9,28 @@ import {
   Copy, 
   Check, 
   Printer, 
-  FileCode, 
   Sparkles, 
-  ExternalLink 
+  ExternalLink,
+  Lock,
+  Building2,
+  FileCheck,
+  Zap,
+  Clock,
+  HelpCircle,
+  Mail,
+  Shield
 } from 'lucide-react';
 import { MERCHANT_KYC_DETAILS } from '../data/portfolioData';
 
 export function PaymentSuccess() {
   const [searchParams] = useSearchParams();
-  const txnid = searchParams.get('txnid') || `TXN_${Date.now()}`;
-  const amount = searchParams.get('amount') || '499';
+  const txnid = searchParams.get('txnid') || `YK_TXN_${Date.now()}`;
+  const rawAmount = searchParams.get('amount') || '499';
+  const amount = Number(rawAmount);
   const product = searchParams.get('product') || 'Premium Fintech UI & Analytics Dashboard Kit';
   const customer = searchParams.get('customer') || 'Valued Developer';
   const email = searchParams.get('email') || 'developer@ykyash.in';
+  const paymentMode = searchParams.get('mode') || 'PayU Secure Checkout';
 
   const [copiedKey, setCopiedKey] = useState(false);
   const [downloading, setDownloading] = useState(false);
@@ -36,7 +45,7 @@ export function PaymentSuccess() {
     setTimeout(() => setCopiedKey(false), 2000);
   };
 
-   const handleDownloadAsset = () => {
+  const handleDownloadAsset = () => {
     setDownloading(true);
 
     setTimeout(() => {
@@ -49,34 +58,36 @@ TRANSACTION ID: ${txnid}
 LICENSE KEY: ${licenseKey}
 LICENSED TO: ${customer} (${email})
 DATE OF ISSUANCE: ${new Date().toUTCString()}
-AMOUNT SETTLED: INR ₹${amount}
+AMOUNT SETTLED: INR ₹${amount.toLocaleString('en-IN')}
+PAYMENT GATEWAY: PayU Payments (256-Bit SSL Encrypted)
 MERCHANT DOMAIN: https://ykyash.in
 PROPRIETOR: ${MERCHANT_KYC_DETAILS.legalName}
+OFFICIAL EMAIL: ${MERCHANT_KYC_DETAILS.officialEmail}
 
 -------------------------------------------------------------------
 TERMS OF COMMERCIAL GRANT:
 -------------------------------------------------------------------
-1. You are granted a non-exclusive, perpetual, worldwide license to use,
-   modify, and deploy this software for personal and commercial projects.
-2. Redistribution, re-licensing, or resale of the raw source package is
-   strictly prohibited.
+1. You are granted a non-exclusive, perpetual, worldwide commercial license 
+   to use, modify, build upon, and deploy this software in personal and 
+   commercial client projects.
+2. Redistribution, re-licensing, or resale of the raw template/source package 
+   is strictly prohibited without written consent.
 
 -------------------------------------------------------------------
 QUICK SETUP INSTRUCTIONS:
 -------------------------------------------------------------------
-1. Unzip the project files into your desired workspace directory.
+1. Unzip the project archive into your workspace folder.
 2. Run 'npm install' or 'bun install' to install peer dependencies.
-3. Configure your .env with your project credentials:
+3. Configure environment variables in .env:
    VITE_PUBLIC_URL=https://ykyash.in
-   GATEWAY_MERCHANT_KEY=your_key_here
-   GATEWAY_MERCHANT_SALT=your_salt_here
-4. Run 'npm run dev' to start the local development server on port 3000.
+   PAYU_MERCHANT_KEY=gtKFFx
+4. Run 'npm run dev' to launch local server.
 
-For priority engineering support or updates:
-Official Email: ${MERCHANT_KYC_DETAILS.officialEmail}
-Helpline: ${MERCHANT_KYC_DETAILS.phone}
+For priority engineering support:
+Support Email: ${MERCHANT_KYC_DETAILS.officialEmail}
+Support Line: ${MERCHANT_KYC_DETAILS.phone}
 
-Thank you for building with YK Yash!
+Thank you for engineering with YK Yash!
 ===================================================================
 `;
 
@@ -100,124 +111,206 @@ Thank you for building with YK Yash!
   };
 
   return (
-    <div className="min-h-screen text-[#12181A] bg-white pt-28 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen text-[#12181A] bg-[#F8FAFC] pt-24 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       
-      {/* Ambient Glow */}
-      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[#39AEA9]/15 rounded-full blur-3xl -z-10 pointer-events-none" />
+      {/* Ambient Radial Background Glows */}
+      <div className="absolute top-10 left-1/2 -translate-x-1/2 w-[650px] h-[650px] bg-gradient-to-tr from-[#39AEA9]/15 via-[#1D5C58]/10 to-transparent rounded-full blur-3xl -z-10 pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-[350px] h-[350px] bg-[#39AEA9]/10 rounded-full blur-2xl -z-10 pointer-events-none" />
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto space-y-6">
         
-        {/* Success Card */}
-        <div className="glass-panel rounded-3xl p-6 sm:p-10 shadow-2xl relative border border-[#39AEA9]/40">
+        {/* Top Trust Banner */}
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-white border border-slate-200/80 shadow-sm text-xs text-[#557B83]">
+          <div className="flex items-center gap-2 font-medium">
+            <ShieldCheck className="w-4 h-4 text-[#39AEA9]" />
+            <span>PayU Verified Merchant Settlement • 256-Bit SSL Protection</span>
+          </div>
+          <div className="flex items-center gap-4 text-[11px] font-mono">
+            <span className="flex items-center gap-1 text-emerald-6-00 font-semibold">
+              <Zap className="w-3 h-3 text-emerald-500 fill-emerald-500" /> Instant Electronic Delivery
+            </span>
+            <span className="hidden sm:inline text-slate-300">|</span>
+            <span className="hidden sm:inline">Ref: {txnid}</span>
+          </div>
+        </div>
+
+        {/* Main Executive Payment Card */}
+        <div className="bg-white rounded-3xl p-6 sm:p-10 shadow-xl border border-slate-200/90 relative overflow-hidden">
           
-          {/* Header */}
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-3xl bg-[#39AEA9]/15 text-[#39AEA9] border border-[#39AEA9]/30 flex items-center justify-center mx-auto mb-4 shadow-sm animate-in zoom-in duration-300">
-              <CheckCircle className="w-10 h-10 text-[#39AEA9]" />
+          {/* Subtle Card Header Accent Bar */}
+          <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#1D5C58] via-[#39AEA9] to-[#88E5BE]" />
+
+          {/* Status Header */}
+          <div className="text-center mb-8 pt-2">
+            <div className="w-20 h-20 rounded-3xl bg-emerald-50 border-2 border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto mb-4 shadow-sm animate-in zoom-in-50 duration-300">
+              <CheckCircle2 className="w-12 h-12 text-emerald-600" />
             </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#39AEA9]/15 text-[#1D5C58] text-xs font-bold font-mono uppercase tracking-widest mb-2 border border-[#39AEA9]/30">
-              <ShieldCheck className="w-3.5 h-3.5 text-[#39AEA9]" />
-              Payment Processed Successfully
+            
+            <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-100/70 text-emerald-800 text-xs font-bold font-mono uppercase tracking-widest mb-3 border border-emerald-200">
+              <Lock className="w-3 h-3 text-emerald-600" />
+              Verified & Settled via PayU
             </div>
-            <h1 className="text-2xl sm:text-4xl font-display font-bold text-[#12181A] mb-2">
-              Order Confirmed & Ready to Download
+
+            <h1 className="text-2xl sm:text-4xl font-display font-extrabold text-slate-900 tracking-tight mb-2">
+              Payment Complete & License Issued
             </h1>
-            <p className="text-sm text-[#557B83] max-w-md mx-auto">
-              Your transaction has been processed securely. Your digital assets and commercial license key are ready below.
+            <p className="text-sm text-slate-500 max-w-lg mx-auto leading-relaxed">
+              Thank you, <span className="font-semibold text-slate-800">{customer}</span>! Your payment of <span className="font-bold text-slate-900">₹{amount.toLocaleString('en-IN')} INR</span> has been authorized. Your digital license package is unlocked below.
             </p>
           </div>
 
-          {/* Instant Download Action Box */}
-          <div className="bg-[#F4F8F7] border border-[#39AEA9]/30 rounded-2xl p-6 mb-8 text-center space-y-4 shadow-inner">
-            <div>
-              <span className="text-xs uppercase font-bold tracking-wider text-[#1D5C58] block mb-1 font-mono">
-                Your Purchased Digital Package
-              </span>
-              <h3 className="text-lg font-display font-bold text-[#12181A]">
-                {product}
-              </h3>
+          {/* Unlocked Product & Download Container */}
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 sm:p-8 mb-8 space-y-6 shadow-inner">
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200/80 pb-5">
+              <div>
+                <span className="text-[11px] uppercase font-bold tracking-wider text-[#1D5C58] block mb-1 font-mono">
+                  Purchased Item & Perpetual License
+                </span>
+                <h2 className="text-xl font-display font-bold text-slate-900">
+                  {product}
+                </h2>
+              </div>
+              <div className="text-left sm:text-right shrink-0">
+                <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-mono">Amount Paid</span>
+                <span className="text-2xl font-display font-extrabold text-slate-900">₹{amount.toLocaleString('en-IN')} <span className="text-xs text-slate-500 font-normal">INR</span></span>
+              </div>
             </div>
 
-            {/* License Key Box */}
-            <div className="bg-white border border-[#557B83]/20 rounded-xl p-3 max-w-md mx-auto flex items-center justify-between gap-2 shadow-sm">
-              <div className="text-left overflow-hidden">
-                <span className="text-[10px] text-[#557B83] uppercase tracking-wider block font-mono">Commercial License Key:</span>
-                <span className="font-mono text-xs sm:text-sm text-[#12181A] font-bold truncate block">
+            {/* License Key Card */}
+            <div className="bg-white border border-slate-300/80 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-sm">
+              <div>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-mono mb-1">
+                  <FileCheck className="w-3.5 h-3.5 text-[#39AEA9]" />
+                  <span>Commercial License Certificate Key:</span>
+                </div>
+                <span className="font-mono text-sm sm:text-base text-slate-900 font-bold tracking-wide select-all block">
                   {licenseKey}
                 </span>
               </div>
               <button
                 onClick={handleCopyLicense}
-                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-[#12181A] border border-[#557B83]/20 transition-colors cursor-pointer shrink-0"
-                title="Copy License Key"
+                className="px-4 py-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold font-mono border border-slate-200 transition-colors flex items-center justify-center gap-2 cursor-pointer shrink-0"
               >
-                {copiedKey ? <Check className="w-4 h-4 text-[#39AEA9]" /> : <Copy className="w-4 h-4" />}
+                {copiedKey ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-600" /> Copied!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4 text-slate-500" /> Copy Key
+                  </>
+                )}
               </button>
             </div>
 
-            {/* Primary Download Button */}
+            {/* Download Call to Action Button */}
             <div className="pt-2">
               <button
                 onClick={handleDownloadAsset}
                 disabled={downloading}
-                className="w-full sm:w-auto px-8 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs btn-turtle-primary flex items-center justify-center gap-2 mx-auto cursor-pointer disabled:opacity-50 shadow-md"
+                className="w-full py-4 px-8 rounded-xl font-bold uppercase tracking-widest text-xs bg-gradient-to-r from-[#1D5C58] via-[#2A7873] to-[#39AEA9] hover:from-[#164845] hover:to-[#2F938F] text-white shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50"
               >
-                <Download className="w-4 h-4 text-white" />
-                {downloading ? 'Preparing Digital Asset...' : (downloadCompleted ? 'Download Again' : 'Download Digital Source Code (.zip / .txt)')}
+                <Download className="w-4.5 h-4.5 text-white" />
+                {downloading ? 'Preparing Source Package...' : (downloadCompleted ? 'Download License Package Again (.txt)' : 'Download Source Package & License Certificate')}
               </button>
             </div>
 
-            <p className="text-[11px] text-[#557B83] font-mono">
-              ⚡ Instant 100% electronic delivery. A copy of the license has also been dispatched to your email.
-            </p>
+            <div className="flex items-center justify-center gap-2 text-xs text-slate-500 font-mono pt-1 text-center">
+              <Mail className="w-3.5 h-3.5 text-[#39AEA9]" />
+              <span>Sent receipt copy to: <strong className="text-slate-700">{email}</strong></span>
+            </div>
           </div>
 
-          {/* Official Invoice / Transaction Receipt */}
-          <div className="bg-[#F4F8F7]/80 border border-[#557B83]/15 rounded-2xl p-6 mb-8 text-xs text-[#12181A]/90 space-y-3 font-mono">
-            <div className="flex items-center justify-between border-b border-[#557B83]/15 pb-3">
-              <span className="font-bold text-[#12181A] uppercase tracking-wider">Transaction Summary</span>
+          {/* Formal Tax & Settlement Invoice */}
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 mb-8 text-xs text-slate-700 space-y-4 shadow-sm font-mono">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-[#1D5C58]" />
+                <span className="font-bold text-slate-900 uppercase tracking-wider">Official Tax Invoice & Receipt</span>
+              </div>
               <button
                 onClick={handlePrintReceipt}
-                className="flex items-center gap-1.5 text-[#39AEA9] hover:text-[#12181A] transition-colors cursor-pointer font-semibold"
+                className="flex items-center gap-1.5 text-[#1D5C58] hover:text-slate-900 transition-colors cursor-pointer font-bold"
               >
-                <Printer className="w-3.5 h-3.5" /> Print Receipt
+                <Printer className="w-3.5 h-3.5" /> Print Invoice
               </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <span className="text-[#557B83]">Transaction ID:</span>
-              <span className="text-[#12181A] font-mono text-right truncate font-medium">{txnid}</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 text-xs">
+              <div className="flex justify-between sm:justify-start sm:gap-4">
+                <span className="text-slate-400">Order Ref:</span>
+                <span className="font-bold text-slate-800 truncate">{txnid}</span>
+              </div>
+              <div className="flex justify-between sm:justify-end sm:gap-4">
+                <span className="text-slate-400">Date:</span>
+                <span className="text-slate-800">{new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+              </div>
 
-              <span className="text-[#557B83]">Total Paid:</span>
-              <span className="text-[#12181A] font-bold text-right text-sm">₹{Number(amount).toLocaleString('en-IN')} INR</span>
+              <div className="flex justify-between sm:justify-start sm:gap-4">
+                <span className="text-slate-400">Customer Name:</span>
+                <span className="text-slate-800 font-medium">{customer}</span>
+              </div>
+              <div className="flex justify-between sm:justify-end sm:gap-4">
+                <span className="text-slate-400">Customer Email:</span>
+                <span className="text-slate-800">{email}</span>
+              </div>
 
-              <span className="text-[#557B83]">Payment Status:</span>
-              <span className="text-[#1D5C58] font-bold text-right">SUCCESS (Settled via Secure Gateway)</span>
+              <div className="flex justify-between sm:justify-start sm:gap-4">
+                <span className="text-slate-400">Gateway Processor:</span>
+                <span className="text-slate-800 font-medium">PayU Payments (India)</span>
+              </div>
+              <div className="flex justify-between sm:justify-end sm:gap-4">
+                <span className="text-slate-400">Settlement Status:</span>
+                <span className="text-emerald-700 font-bold uppercase">SUCCESS / CAPTURED</span>
+              </div>
 
-              <span className="text-[#557B83]">Delivery Method:</span>
-              <span className="text-[#12181A] text-right">Instant On-Screen Download</span>
+              <div className="flex justify-between sm:justify-start sm:gap-4">
+                <span className="text-slate-400">Legal Business Entity:</span>
+                <span className="text-slate-800">{MERCHANT_KYC_DETAILS.businessName}</span>
+              </div>
+              <div className="flex justify-between sm:justify-end sm:gap-4">
+                <span className="text-slate-400">GST Status:</span>
+                <span className="text-slate-800 font-semibold">{MERCHANT_KYC_DETAILS.gstNumber ? `GSTIN: ${MERCHANT_KYC_DETAILS.gstNumber}` : 'Composition / Unregistered'}</span>
+              </div>
+            </div>
 
-              <span className="text-[#557B83]">Merchant:</span>
-              <span className="text-[#12181A] text-right">{MERCHANT_KYC_DETAILS.businessName}</span>
+            <div className="border-t border-slate-200 pt-3 flex items-center justify-between font-bold text-sm">
+              <span className="text-slate-900">Total Net Amount Paid:</span>
+              <span className="text-slate-900 text-base">₹{amount.toLocaleString('en-IN')} INR</span>
             </div>
           </div>
 
-          {/* Action Links */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 text-xs font-mono">
+          {/* Action Navigation */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-slate-200/80">
             <Link
               to="/store"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl glass-panel text-[#12181A] hover:border-[#39AEA9] transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-mono text-xs font-bold transition-colors w-full sm:w-auto"
             >
-              <ArrowLeft className="w-4 h-4 text-[#39AEA9]" /> Return to Store
+              <ArrowLeft className="w-4 h-4 text-[#1D5C58]" /> Return to Store Catalog
             </Link>
+            
             <Link
               to="/contact"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-[#557B83]/20 text-[#557B83] hover:text-[#12181A] transition-colors"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl border border-slate-200 hover:border-slate-300 text-slate-600 hover:text-slate-900 font-mono text-xs font-medium transition-colors w-full sm:w-auto"
             >
-              Need Help? Contact Support
+              <HelpCircle className="w-4 h-4 text-slate-400" /> Need Support? ({MERCHANT_KYC_DETAILS.officialEmail})
             </Link>
           </div>
 
+        </div>
+
+        {/* Security Seals */}
+        <div className="flex flex-wrap items-center justify-center gap-6 text-slate-400 text-xs font-mono py-2">
+          <span className="flex items-center gap-1.5">
+            <Shield className="w-4 h-4 text-emerald-500" /> 256-Bit SSL Encryption
+          </span>
+          <span>•</span>
+          <span className="flex items-center gap-1.5">
+            <Lock className="w-4 h-4 text-[#39AEA9]" /> PCI-DSS Compliant PayU Gateway
+          </span>
+          <span>•</span>
+          <span>Perpetual Commercial Grant</span>
         </div>
 
       </div>
@@ -228,44 +321,62 @@ Thank you for building with YK Yash!
 export function PaymentFailure() {
   const [searchParams] = useSearchParams();
   const txnid = searchParams.get('txnid') || 'N/A';
-  const reason = searchParams.get('reason') || 'The payment was cancelled by user or declined by bank.';
+  const reason = searchParams.get('reason') || 'The transaction was cancelled or declined by your card issuing bank.';
 
   return (
-    <div className="min-h-screen text-[#12181A] bg-white pt-28 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="max-w-md mx-auto text-center">
-        <div className="glass-panel rounded-3xl p-8 shadow-xl border border-red-500/30">
+    <div className="min-h-screen text-[#12181A] bg-[#F8FAFC] pt-24 pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden flex items-center justify-center">
+      
+      {/* Ambient Red Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-red-500/10 rounded-full blur-3xl -z-10 pointer-events-none" />
+
+      <div className="max-w-md w-full mx-auto">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-red-200 text-center space-y-6 relative overflow-hidden">
           
-          <div className="w-16 h-16 rounded-3xl bg-red-500/10 text-red-500 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
-            <XCircle className="w-10 h-10" />
+          <div className="w-20 h-20 rounded-3xl bg-red-50 text-red-500 border-2 border-red-200 flex items-center justify-center mx-auto shadow-sm">
+            <XCircle className="w-12 h-12" />
           </div>
 
-          <h1 className="text-2xl font-display font-bold text-[#12181A] mb-2">
-            Payment Not Completed
-          </h1>
-          <p className="text-sm text-[#557B83] mb-4 leading-relaxed">
-            {reason}
-          </p>
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-100 text-red-800 text-xs font-bold font-mono uppercase tracking-widest mb-2 border border-red-200">
+              Payment Incomplete
+            </div>
+            <h1 className="text-2xl font-display font-extrabold text-slate-900 mb-2">
+              Transaction Declined
+            </h1>
+            <p className="text-sm text-slate-600 leading-relaxed max-w-xs mx-auto">
+              {reason}
+            </p>
+          </div>
 
-          <div className="bg-[#F4F8F7] p-3 rounded-xl border border-[#557B83]/15 mb-6 text-xs text-[#557B83] font-mono">
-            Transaction Ref: <span className="font-bold text-[#12181A]">{txnid}</span>
+          <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs font-mono text-slate-600 space-y-1 text-left">
+            <div className="flex justify-between">
+              <span className="text-slate-400">Transaction Ref:</span>
+              <span className="font-bold text-slate-900">{txnid}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Gateway Provider:</span>
+              <span className="text-slate-800">PayU Payments</span>
+            </div>
           </div>
 
           <div className="space-y-3 font-mono text-xs">
             <Link
               to="/store"
-              className="block w-full py-3.5 rounded-2xl btn-turtle-primary uppercase tracking-wider text-white shadow-md hover:shadow-lg transition-all"
+              className="block w-full py-3.5 px-6 rounded-xl bg-[#1D5C58] hover:bg-[#164845] font-bold uppercase tracking-wider text-white shadow-md hover:shadow-lg transition-all"
             >
-              Try Again from Store
+              Try Order Again from Store
             </Link>
             <Link
               to="/contact"
-              className="block w-full py-2.5 rounded-xl text-[#557B83] hover:text-[#12181A] transition-colors"
+              className="block w-full py-2.5 px-6 rounded-xl border border-slate-200 text-slate-600 hover:text-slate-900 font-medium transition-colors"
             >
               Contact Support ({MERCHANT_KYC_DETAILS.officialEmail})
             </Link>
           </div>
+
         </div>
       </div>
     </div>
   );
 }
+
