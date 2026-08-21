@@ -4,6 +4,8 @@ import { Resend } from 'resend';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
 import { put, del, list } from '@vercel/blob';
+import { handleUpload } from '@vercel/blob/client';
+import webpush from 'web-push';
 
 const app = express();
 app.use(express.json({ limit: '100mb' }));
@@ -81,8 +83,6 @@ app.get('/api/blob/stats', async (req, res) => {
     res.status(500).json({ error: error.message || 'Failed to fetch Vercel Blob stats' });
   }
 });
-
-import { handleUpload } from '@vercel/blob/client';
 
 // Endpoint for Vercel Blob client upload token generation and callback
 app.post('/api/upload', async (req, res) => {
@@ -371,8 +371,6 @@ app.post('/api/auth/verify', (req, res) => {
     return res.status(400).json({ error: 'Invalid or expired code' });
   }
 });
-
-import webpush from 'web-push';
 
 // Web Push setup
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || 'BKBmjGF6XWxFd6UQtsQlUgPs54dERDDqs20oMNjccb5z4irQTxysbZwSW7j3D3aeockUGiqlz6Ert5PagZtcWcs';
