@@ -352,3 +352,5 @@ export function PayUCustomCheckoutModal({
     </div>
   );
 }
+
+export default PayUCustomCheckoutModal;
