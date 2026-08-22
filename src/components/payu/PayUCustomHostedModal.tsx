@@ -693,110 +693,76 @@ export function PayUCustomHostedModal({
                 </div>
               )}
 
-              {/* Cards Mode */}
+              {/* Cards Mode -> Redirect to PayU Official Checkout */}
               {activeTab === 'card' && (
-                <form onSubmit={handleCustomSubmit} className="space-y-3">
-                  <div>
-                    <label className="text-[11px] font-mono text-slate-500 block mb-1">Card Number</label>
-                    <input
-                      type="text"
-                      maxLength={19}
-                      placeholder="4532 •••• •••• ••••"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 '))}
-                      className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[11px] font-mono text-slate-500 block mb-1">Expiry (MM/YY)</label>
-                      <input
-                        type="text"
-                        maxLength={5}
-                        placeholder="MM/YY"
-                        value={cardExpiry}
-                        onChange={(e) => {
-                          let val = e.target.value.replace(/\D/g, '');
-                          if (val.length > 2) val = `${val.slice(0, 2)}/${val.slice(2, 4)}`;
-                          setCardExpiry(val);
-                        }}
-                        className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[11px] font-mono text-slate-500 block mb-1">CVV</label>
-                      <input
-                        type="password"
-                        maxLength={4}
-                        placeholder="•••"
-                        value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
-                        className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
-                      />
-                    </div>
+                <div className="space-y-4 py-2">
+                  <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl text-xs text-teal-950 space-y-1">
+                    <p className="font-bold flex items-center gap-1">
+                      <CreditCard className="w-4 h-4 text-teal-700" /> Credit & Debit Cards via PayU
+                    </p>
+                    <p className="text-slate-600 leading-relaxed">
+                      You will be securely redirected to PayU's 256-bit encrypted checkout to complete your Card or EMI payment with 3D Secure OTP.
+                    </p>
                   </div>
 
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleCustomSubmit}
                     disabled={loading}
-                    className="w-full mt-2 py-3 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    className="w-full py-3.5 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    {loading ? 'Processing Card...' : `Pay ₹${item.priceINR} via Card`}
+                    {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+                    <span>{loading ? 'Connecting to PayU...' : `Continue to Pay ₹${item.priceINR} via Card`}</span>
                   </button>
-                </form>
+                </div>
               )}
 
-              {/* NetBanking Mode */}
+              {/* NetBanking Mode -> Redirect to PayU Official Checkout */}
               {activeTab === 'nb' && (
-                <form onSubmit={handleCustomSubmit} className="space-y-3">
-                  <label className="text-xs text-slate-600 block">Select your banking institution:</label>
-                  <select
-                    value={selectedBank}
-                    onChange={(e) => setSelectedBank(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 cursor-pointer"
-                  >
-                    {popularBanks.map((bank) => (
-                      <option key={bank.code} value={bank.code}>
-                        {bank.name}
-                      </option>
-                    ))}
-                  </select>
+                <div className="space-y-4 py-2">
+                  <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl text-xs text-teal-950 space-y-1">
+                    <p className="font-bold flex items-center gap-1">
+                      <Building2 className="w-4 h-4 text-teal-700" /> NetBanking & 50+ Major Indian Banks
+                    </p>
+                    <p className="text-slate-600 leading-relaxed">
+                      Choose SBI, HDFC, ICICI, Axis, or any other bank securely on PayU's official payment page.
+                    </p>
+                  </div>
 
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleCustomSubmit}
                     disabled={loading}
-                    className="w-full py-3 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    className="w-full py-3.5 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    {loading ? 'Redirecting to Bank...' : `Proceed with Bank (₹${item.priceINR})`}
+                    {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+                    <span>{loading ? 'Redirecting to Bank Gateway...' : `Proceed to NetBanking (₹${item.priceINR})`}</span>
                   </button>
-                </form>
+                </div>
               )}
 
-              {/* Wallets Mode */}
+              {/* Wallets & Pay Later Mode -> Redirect to PayU Official Checkout */}
               {activeTab === 'wallet' && (
-                <form onSubmit={handleCustomSubmit} className="space-y-3">
-                  <label className="text-xs text-slate-600 block">Select supported wallet:</label>
-                  <select
-                    value={selectedWallet}
-                    onChange={(e) => setSelectedWallet(e.target.value)}
-                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 cursor-pointer"
-                  >
-                    {popularWallets.map((w) => (
-                      <option key={w.code} value={w.code}>
-                        {w.name}
-                      </option>
-                    ))}
-                  </select>
+                <div className="space-y-4 py-2">
+                  <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl text-xs text-teal-950 space-y-1">
+                    <p className="font-bold flex items-center gap-1">
+                      <Wallet className="w-4 h-4 text-teal-700" /> Wallets & PayLater Options
+                    </p>
+                    <p className="text-slate-600 leading-relaxed">
+                      Pay using Paytm Wallet, PhonePe Wallet, Amazon Pay, Mobikwik, or LazyPay via PayU.
+                    </p>
+                  </div>
 
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={handleCustomSubmit}
                     disabled={loading}
-                    className="w-full py-3 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-50"
+                    className="w-full py-3.5 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    {loading ? 'Connecting Wallet...' : `Pay via Wallet (₹${item.priceINR})`}
+                    {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ExternalLink className="w-4 h-4" />}
+                    <span>{loading ? 'Connecting Wallet...' : `Proceed to Wallets / PayLater (₹${item.priceINR})`}</span>
                   </button>
-                </form>
+                </div>
               )}
 
             </div>
