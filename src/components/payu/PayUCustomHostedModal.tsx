@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   X, 
   CreditCard, 
@@ -11,8 +11,13 @@ import {
   Zap,
   ArrowRight,
   CheckCircle2,
-  Smartphone
+  Smartphone,
+  Copy,
+  Check,
+  RefreshCw,
+  ExternalLink
 } from 'lucide-react';
+import QRCode from 'qrcode';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
 
@@ -36,12 +41,19 @@ interface PayUCustomHostedModalProps {
 }
 
 type PaymentTab = 'upi' | 'card' | 'nb' | 'wallet';
+type UpiMode = 'qr' | 'intent' | 'vpa';
 
 /**
  * PayU Custom Checkout (Merchant-Hosted) Modal
- * Enables in-app customer selection of payment method (UPI, Cards, NetBanking, Wallets)
- * and seamless submission adhering to PayU Merchant-Hosted specifications.
- * Reference: https://docs.payu.in/docs/custom-checkout-merchant-hosted
+ * Features:
+ * 1. UPI Intent App Triggers (GPay, PhonePe, Paytm, CRED, BHIM)
+ * 2. Dynamic NPCI UPI QR Code Generation & Auto Status Verification Polling
+ * 3. UPI VPA Collect Mode
+ * 4. Credit / Debit Cards (CC/DC)
+ * 5. Net Banking & Wallets
+ * Reference: 
+ * - https://docs.payu.in/docs/custom-checkout-merchant-hosted
+ * - https://docs.payu.in/docs/upi-intent-server-to-server
  */
 export function PayUCustomHostedModal({
   isOpen,
@@ -52,11 +64,21 @@ export function PayUCustomHostedModal({
   initialCustomerPhone = ''
 }: PayUCustomHostedModalProps) {
   const [activeTab, setActiveTab] = useState<PaymentTab>('upi');
+  const [upiMode, setUpiMode] = useState<UpiMode>('intent');
   
   // Customer basic info
   const [customerName, setCustomerName] = useState(initialCustomerName);
   const [customerEmail, setCustomerEmail] = useState(initialCustomerEmail);
   const [customerPhone, setCustomerPhone] = useState(initialCustomerPhone);
+
+  // Dynamic QR & UPI Intent State
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const [upiIntentUri, setUpiIntentUri] = useState<string>('');
+  const [upiAppUris, setUpiAppUris] = useState<Record<string, string>>({});
+  const [generatedTxnid, setGeneratedTxnid] = useState<string>('');
+  const [qrLoading, setQrLoading] = useState(false);
+  const [qrPolling, setQrPolling] = useState(false);
+  const [copiedVpa, setCopiedVpa] = useState(false);
 
   // Card fields
   const [cardNumber, setCardNumber] = useState('');
@@ -64,23 +86,30 @@ export function PayUCustomHostedModal({
   const [cardExpiry, setCardExpiry] = useState('');
   const [cardCvv, setCardCvv] = useState('');
 
-  // UPI fields
+  // UPI VPA field
   const [vpa, setVpa] = useState('');
 
-  // NetBanking fields
+  // NetBanking & Wallet fields
   const [selectedBank, setSelectedBank] = useState('SBIN');
-
-  // Wallet fields
   const [selectedWallet, setSelectedWallet] = useState('PAYTM');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const pollingIntervalRef = useRef<any>(null);
 
   useEffect(() => {
     if (initialCustomerName && !customerName) setCustomerName(initialCustomerName);
     if (initialCustomerEmail && !customerEmail) setCustomerEmail(initialCustomerEmail);
     if (initialCustomerPhone && !customerPhone) setCustomerPhone(initialCustomerPhone);
   }, [initialCustomerName, initialCustomerEmail, initialCustomerPhone]);
+
+  // Clean up polling interval on unmount or close
+  useEffect(() => {
+    return () => {
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+    };
+  }, []);
 
   if (!isOpen || !item) return null;
 
@@ -100,6 +129,91 @@ export function PayUCustomHostedModal({
     { code: 'OLAMONEY', name: 'Ola Money' }
   ];
 
+  // Generate Dynamic S2S UPI Intent and QR Code
+  const handleGenerateUpiIntentOrQr = async () => {
+    if (!customerName.trim() || !customerEmail.trim() || customerPhone.replace(/\D/g, '').length < 10) {
+      setError('Please fill in your Name, Email, and 10-digit Phone first.');
+      return;
+    }
+    setError(null);
+    setQrLoading(true);
+
+    try {
+      const payload = {
+        amount: item.priceINR,
+        productinfo: item.title,
+        firstname: customerName.trim(),
+        email: customerEmail.trim(),
+        phone: customerPhone.replace(/\D/g, ''),
+        udf1: item.id,
+        udf2: item.type || 'digital_product',
+        udf3: customerPhone
+      };
+
+      const res = await fetch('/api/payu/custom/s2s-upi-intent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to generate UPI Intent.');
+      }
+
+      setGeneratedTxnid(data.txnid);
+      setUpiIntentUri(data.upiUri);
+      setUpiAppUris(data.intentUris || {});
+
+      // Generate QR Canvas
+      if (data.upiUri) {
+        const qrUrl = await QRCode.toDataURL(data.upiUri, {
+          width: 250,
+          margin: 2,
+          color: {
+            dark: '#12181A',
+            light: '#FFFFFF'
+          }
+        });
+        setQrCodeDataUrl(qrUrl);
+      }
+
+      // Start automatic polling for payment verification
+      startStatusPolling(data.txnid);
+
+    } catch (err: any) {
+      console.error('UPI Intent/QR Error:', err);
+      setError(err.message || 'Unable to generate dynamic UPI QR. Please try VPA or Card mode.');
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  // Poll server for payment confirmation via verify_payment command
+  const startStatusPolling = (txnid: string) => {
+    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+    setQrPolling(true);
+
+    pollingIntervalRef.current = setInterval(async () => {
+      try {
+        const res = await fetch('/api/payu/custom/verify-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ txnid })
+        });
+        const verifyData = await res.json();
+
+        if (verifyData.verified || verifyData.status === 'success') {
+          if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+          window.location.href = `/payment/success?txnid=${txnid}&amount=${item.priceINR}&product=${encodeURIComponent(item.title)}&customer=${encodeURIComponent(customerName)}&email=${encodeURIComponent(customerEmail)}&gateway=payu_custom&status=success`;
+        }
+      } catch (pollErr) {
+        console.warn('Payment polling check:', pollErr);
+      }
+    }, 4000);
+  };
+
+  // Handle standard Custom Checkout submission (Cards, VPA, NetBanking, Wallets)
   const handleCustomSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (loading) return;
@@ -135,8 +249,8 @@ export function PayUCustomHostedModal({
       }
     }
 
-    if (activeTab === 'upi' && vpa.trim() && !vpa.includes('@')) {
-      setError('Please enter a valid UPI VPA (e.g., username@okhdfcbank).');
+    if (activeTab === 'upi' && upiMode === 'vpa' && (!vpa.trim() || !vpa.includes('@'))) {
+      setError('Please enter a valid UPI VPA (e.g. username@okaxis / username@paytm).');
       return;
     }
 
@@ -166,7 +280,7 @@ export function PayUCustomHostedModal({
         phone: customerPhone.replace(/\D/g, ''),
         paymentMode: activeTab,
         cardDetails,
-        upiDetails: activeTab === 'upi' ? { vpa: vpa.trim() } : undefined,
+        upiDetails: (activeTab === 'upi' && vpa) ? { vpa: vpa.trim() } : undefined,
         nbDetails: activeTab === 'nb' ? { bankcode: selectedBank } : undefined,
         walletDetails: activeTab === 'wallet' ? { bankcode: selectedWallet } : undefined,
         udf1: item.id,
@@ -174,7 +288,7 @@ export function PayUCustomHostedModal({
         udf3: customerPhone
       };
 
-      // Optional database order log
+      // Firestore logging
       try {
         if (db) {
           await addDoc(collection(db, 'inquiries'), {
@@ -194,7 +308,6 @@ export function PayUCustomHostedModal({
         console.warn('Firestore order logging notice:', dbErr);
       }
 
-      // Call dedicated PayU Custom initiation endpoint
       const response = await fetch('/api/payu/custom/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -207,7 +320,7 @@ export function PayUCustomHostedModal({
         throw new Error(data.error || 'Failed to initialize PayU custom checkout.');
       }
 
-      // Post parameters directly to PayU gateway endpoint
+      // Auto-post Merchant-Hosted form to PayU gateway
       const form = document.createElement('form');
       form.method = 'POST';
       form.action = data.actionUrl || 'https://secure.payu.in/_payment';
@@ -236,7 +349,7 @@ export function PayUCustomHostedModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
       <div className="bg-white max-w-xl w-full rounded-3xl shadow-2xl relative border border-slate-200 overflow-hidden my-auto max-h-[94vh] flex flex-col">
         
-        {/* Top Header */}
+        {/* Header */}
         <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-2xl bg-teal-600/10 text-teal-700 border border-teal-600/20">
@@ -252,13 +365,16 @@ export function PayUCustomHostedModal({
                 </span>
               </div>
               <p className="text-xs text-slate-500 font-mono">
-                PayU Custom Merchant-Hosted Flow
+                Direct In-Modal UPI QR, Apps & Card Checkout
               </p>
             </div>
           </div>
 
           <button
-            onClick={onClose}
+            onClick={() => {
+              if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+              onClose();
+            }}
             className="p-2 rounded-xl bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors border border-slate-200 cursor-pointer"
             title="Close"
           >
@@ -283,214 +399,367 @@ export function PayUCustomHostedModal({
             </div>
           </div>
 
-          <form onSubmit={handleCustomSubmit} className="space-y-4">
-            {/* Customer Details */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-900 font-mono">
-                1. Customer Details
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <input
-                  type="text"
-                  required
-                  placeholder="Full Legal Name"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="bg-slate-50 border border-slate-300 rounded-xl py-2 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white"
-                />
-                <input
-                  type="email"
-                  required
-                  placeholder="Email Address"
-                  value={customerEmail}
-                  onChange={(e) => setCustomerEmail(e.target.value)}
-                  className="bg-slate-50 border border-slate-300 rounded-xl py-2 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white"
-                />
-                <input
-                  type="tel"
-                  required
-                  placeholder="10-Digit Mobile"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                  className="bg-slate-50 border border-slate-300 rounded-xl py-2 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white"
-                />
-              </div>
+          {/* 1. Customer Details */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-900 font-mono">
+              1. Customer Details
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <input
+                type="text"
+                required
+                placeholder="Full Legal Name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                className="bg-slate-50 border border-slate-300 rounded-xl py-2 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white"
+              />
+              <input
+                type="email"
+                required
+                placeholder="Email Address"
+                value={customerEmail}
+                onChange={(e) => setCustomerEmail(e.target.value)}
+                className="bg-slate-50 border border-slate-300 rounded-xl py-2 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white"
+              />
+              <input
+                type="tel"
+                required
+                placeholder="10-Digit Mobile"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                className="bg-slate-50 border border-slate-300 rounded-xl py-2 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white"
+              />
+            </div>
+          </div>
+
+          {/* 2. Payment Method Tabs */}
+          <div className="space-y-2 pt-1">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-900 font-mono">
+              2. Choose Payment Mode
+            </label>
+            
+            <div className="grid grid-cols-4 gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
+              <button
+                type="button"
+                onClick={() => setActiveTab('upi')}
+                className={`py-2 text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  activeTab === 'upi' ? 'bg-white text-teal-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" /> UPI
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('card')}
+                className={`py-2 text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  activeTab === 'card' ? 'bg-white text-teal-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <CreditCard className="w-3.5 h-3.5" /> Cards
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('nb')}
+                className={`py-2 text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  activeTab === 'nb' ? 'bg-white text-teal-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <Building2 className="w-3.5 h-3.5" /> NetBank
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('wallet')}
+                className={`py-2 text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                  activeTab === 'wallet' ? 'bg-white text-teal-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+                }`}
+              >
+                <Wallet className="w-3.5 h-3.5" /> Wallets
+              </button>
             </div>
 
-            {/* Payment Method Selector Tabs */}
-            <div className="space-y-2 pt-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-900 font-mono">
-                2. Choose Payment Mode
-              </label>
+            {/* Sub-tab / Controls container */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 mt-2">
               
-              <div className="grid grid-cols-4 gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('upi')}
-                  className={`py-2 text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    activeTab === 'upi' ? 'bg-white text-teal-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  <Smartphone className="w-3.5 h-3.5" /> UPI
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('card')}
-                  className={`py-2 text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    activeTab === 'card' ? 'bg-white text-teal-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  <CreditCard className="w-3.5 h-3.5" /> Cards
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('nb')}
-                  className={`py-2 text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    activeTab === 'nb' ? 'bg-white text-teal-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  <Building2 className="w-3.5 h-3.5" /> NetBank
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('wallet')}
-                  className={`py-2 text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    activeTab === 'wallet' ? 'bg-white text-teal-800 shadow-sm' : 'text-slate-500 hover:text-slate-900'
-                  }`}
-                >
-                  <Wallet className="w-3.5 h-3.5" /> Wallets
-                </button>
-              </div>
-
-              {/* Tab Contents */}
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 mt-2">
-                {/* UPI Mode */}
-                {activeTab === 'upi' && (
-                  <div className="space-y-3">
-                    <p className="text-xs text-slate-600">
-                      Enter your Virtual Payment Address (VPA) or leave blank to choose directly on UPI screen.
-                    </p>
-                    <input
-                      type="text"
-                      placeholder="e.g. yourname@oksbi / yourname@paytm"
-                      value={vpa}
-                      onChange={(e) => setVpa(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
-                    />
-                    <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono">
-                      <span>Supported: GPay, PhonePe, Paytm, BHIM, CRED</span>
-                    </div>
+              {/* UPI Tab with QR, Intent & VPA Submodes */}
+              {activeTab === 'upi' && (
+                <div className="space-y-4">
+                  {/* UPI Submode toggle */}
+                  <div className="flex items-center justify-center gap-1 p-1 bg-white rounded-xl border border-slate-200 text-xs font-mono">
+                    <button
+                      type="button"
+                      onClick={() => setUpiMode('intent')}
+                      className={`flex-1 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                        upiMode === 'intent' ? 'bg-teal-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Zap className="w-3 h-3" /> UPI Apps Intent
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setUpiMode('qr');
+                        if (!qrCodeDataUrl) handleGenerateUpiIntentOrQr();
+                      }}
+                      className={`flex-1 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                        upiMode === 'qr' ? 'bg-teal-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <QrCode className="w-3 h-3" /> Dynamic QR Code
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setUpiMode('vpa')}
+                      className={`flex-1 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                        upiMode === 'vpa' ? 'bg-teal-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <span>UPI VPA Collect</span>
+                    </button>
                   </div>
-                )}
 
-                {/* Cards Mode */}
-                {activeTab === 'card' && (
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[11px] font-mono text-slate-500 block mb-1">Card Number</label>
+                  {/* 1. UPI Intent Apps */}
+                  {upiMode === 'intent' && (
+                    <div className="space-y-3 text-center">
+                      <p className="text-xs text-slate-600">
+                        Launch your preferred UPI app directly to approve ₹{item.priceINR}.
+                      </p>
+
+                      {!upiIntentUri ? (
+                        <button
+                          type="button"
+                          onClick={handleGenerateUpiIntentOrQr}
+                          disabled={qrLoading}
+                          className="w-full py-3 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all disabled:opacity-50"
+                        >
+                          {qrLoading ? (
+                            <span>Generating UPI Intent Session...</span>
+                          ) : (
+                            <>
+                              <Zap className="w-4 h-4 text-emerald-300" />
+                              <span>Generate 1-Click UPI App Links</span>
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <div className="space-y-2.5">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <a
+                              href={upiAppUris.gpay || upiIntentUri}
+                              className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-teal-500 hover:shadow-md transition-all text-center group font-mono text-xs font-bold text-slate-800 flex flex-col items-center gap-1"
+                            >
+                              <Smartphone className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
+                              <span>Google Pay</span>
+                            </a>
+                            <a
+                              href={upiAppUris.phonepe || upiIntentUri}
+                              className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-teal-500 hover:shadow-md transition-all text-center group font-mono text-xs font-bold text-slate-800 flex flex-col items-center gap-1"
+                            >
+                              <Smartphone className="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" />
+                              <span>PhonePe</span>
+                            </a>
+                            <a
+                              href={upiAppUris.paytm || upiIntentUri}
+                              className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-teal-500 hover:shadow-md transition-all text-center group font-mono text-xs font-bold text-slate-800 flex flex-col items-center gap-1"
+                            >
+                              <Smartphone className="w-5 h-5 text-sky-600 group-hover:scale-110 transition-transform" />
+                              <span>Paytm</span>
+                            </a>
+                            <a
+                              href={upiAppUris.cred || upiIntentUri}
+                              className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-teal-500 hover:shadow-md transition-all text-center group font-mono text-xs font-bold text-slate-800 flex flex-col items-center gap-1"
+                            >
+                              <Smartphone className="w-5 h-5 text-slate-900 group-hover:scale-110 transition-transform" />
+                              <span>CRED / BHIM</span>
+                            </a>
+                          </div>
+
+                          <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] font-mono text-emerald-800 flex items-center justify-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                            <span>Listening for transaction authorization in background...</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 2. Dynamic QR Code */}
+                  {upiMode === 'qr' && (
+                    <div className="text-center space-y-3">
+                      {qrLoading ? (
+                        <div className="py-8 flex flex-col items-center justify-center gap-2">
+                          <RefreshCw className="w-6 h-6 text-teal-700 animate-spin" />
+                          <span className="text-xs font-mono text-slate-500">Generating NPCI Dynamic QR Code...</span>
+                        </div>
+                      ) : qrCodeDataUrl ? (
+                        <div className="flex flex-col items-center space-y-2">
+                          <div className="p-3 bg-white border-2 border-slate-200 rounded-2xl shadow-sm">
+                            <img src={qrCodeDataUrl} alt="PayU Dynamic UPI QR" className="w-48 h-48 mx-auto" />
+                          </div>
+                          <p className="text-xs text-slate-600 font-medium">
+                            Scan with GPay, PhonePe, Paytm, BHIM, or any UPI App to pay ₹{item.priceINR}
+                          </p>
+                          <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] font-mono text-emerald-800 flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                            <span>Auto-verifying payment... Instant screen refresh</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleGenerateUpiIntentOrQr}
+                          className="w-full py-3 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                        >
+                          <QrCode className="w-4 h-4" /> Generate Dynamic QR Code
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 3. VPA Collect */}
+                  {upiMode === 'vpa' && (
+                    <div className="space-y-3">
+                      <p className="text-xs text-slate-600">
+                        Enter your UPI ID (VPA) to receive a collect payment request on your UPI app.
+                      </p>
                       <input
                         type="text"
-                        maxLength={19}
-                        placeholder="4532 •••• •••• ••••"
-                        value={cardNumber}
-                        onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 '))}
+                        placeholder="e.g. username@oksbi / username@paytm"
+                        value={vpa}
+                        onChange={(e) => setVpa(e.target.value)}
+                        className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleCustomSubmit}
+                        disabled={loading}
+                        className="w-full py-3 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-50"
+                      >
+                        {loading ? 'Sending Collect Request...' : `Send UPI Collect Request (₹${item.priceINR})`}
+                      </button>
+                    </div>
+                  )}
+
+                </div>
+              )}
+
+              {/* Cards Mode */}
+              {activeTab === 'card' && (
+                <form onSubmit={handleCustomSubmit} className="space-y-3">
+                  <div>
+                    <label className="text-[11px] font-mono text-slate-500 block mb-1">Card Number</label>
+                    <input
+                      type="text"
+                      maxLength={19}
+                      placeholder="4532 •••• •••• ••••"
+                      value={cardNumber}
+                      onChange={(e) => setCardNumber(e.target.value.replace(/\D/g, '').replace(/(\d{4})(?=\d)/g, '$1 '))}
+                      className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] font-mono text-slate-500 block mb-1">Expiry (MM/YY)</label>
+                      <input
+                        type="text"
+                        maxLength={5}
+                        placeholder="MM/YY"
+                        value={cardExpiry}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(/\D/g, '');
+                          if (val.length > 2) val = `${val.slice(0, 2)}/${val.slice(2, 4)}`;
+                          setCardExpiry(val);
+                        }}
                         className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
                       />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[11px] font-mono text-slate-500 block mb-1">Expiry (MM/YY)</label>
-                        <input
-                          type="text"
-                          maxLength={5}
-                          placeholder="MM/YY"
-                          value={cardExpiry}
-                          onChange={(e) => {
-                            let val = e.target.value.replace(/\D/g, '');
-                            if (val.length > 2) val = `${val.slice(0, 2)}/${val.slice(2, 4)}`;
-                            setCardExpiry(val);
-                          }}
-                          className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[11px] font-mono text-slate-500 block mb-1">CVV</label>
-                        <input
-                          type="password"
-                          maxLength={4}
-                          placeholder="•••"
-                          value={cardCvv}
-                          onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
-                          className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
-                        />
-                      </div>
+                    <div>
+                      <label className="text-[11px] font-mono text-slate-500 block mb-1">CVV</label>
+                      <input
+                        type="password"
+                        maxLength={4}
+                        placeholder="•••"
+                        value={cardCvv}
+                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, ''))}
+                        className="w-full bg-white border border-slate-300 rounded-xl py-2 px-3 text-xs font-mono font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
+                      />
                     </div>
                   </div>
-                )}
 
-                {/* NetBanking Mode */}
-                {activeTab === 'nb' && (
-                  <div className="space-y-3">
-                    <label className="text-xs text-slate-600 block">Select your banking institution:</label>
-                    <select
-                      value={selectedBank}
-                      onChange={(e) => setSelectedBank(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 cursor-pointer"
-                    >
-                      {popularBanks.map((bank) => (
-                        <option key={bank.code} value={bank.code}>
-                          {bank.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {/* Wallets Mode */}
-                {activeTab === 'wallet' && (
-                  <div className="space-y-3">
-                    <label className="text-xs text-slate-600 block">Select supported wallet:</label>
-                    <select
-                      value={selectedWallet}
-                      onChange={(e) => setSelectedWallet(e.target.value)}
-                      className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 cursor-pointer"
-                    >
-                      {popularWallets.map((w) => (
-                        <option key={w.code} value={w.code}>
-                          {w.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {error && (
-              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3.5 px-6 rounded-2xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-            >
-              {loading ? (
-                <span>Initiating Custom Payment...</span>
-              ) : (
-                <>
-                  <Zap className="w-4 h-4 text-emerald-300" />
-                  <span>Authorize ₹{item.priceINR} via {activeTab.toUpperCase()}</span>
-                </>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full mt-2 py-3 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {loading ? 'Processing Card...' : `Pay ₹${item.priceINR} via Card`}
+                  </button>
+                </form>
               )}
-            </button>
-          </form>
+
+              {/* NetBanking Mode */}
+              {activeTab === 'nb' && (
+                <form onSubmit={handleCustomSubmit} className="space-y-3">
+                  <label className="text-xs text-slate-600 block">Select your banking institution:</label>
+                  <select
+                    value={selectedBank}
+                    onChange={(e) => setSelectedBank(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 cursor-pointer"
+                  >
+                    {popularBanks.map((bank) => (
+                      <option key={bank.code} value={bank.code}>
+                        {bank.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {loading ? 'Redirecting to Bank...' : `Proceed with Bank (₹${item.priceINR})`}
+                  </button>
+                </form>
+              )}
+
+              {/* Wallets Mode */}
+              {activeTab === 'wallet' && (
+                <form onSubmit={handleCustomSubmit} className="space-y-3">
+                  <label className="text-xs text-slate-600 block">Select supported wallet:</label>
+                  <select
+                    value={selectedWallet}
+                    onChange={(e) => setSelectedWallet(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600 cursor-pointer"
+                  >
+                    {popularWallets.map((w) => (
+                      <option key={w.code} value={w.code}>
+                        {w.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {loading ? 'Connecting Wallet...' : `Pay via Wallet (₹${item.priceINR})`}
+                  </button>
+                </form>
+              )}
+
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
+              {error}
+            </div>
+          )}
+
         </div>
 
         {/* Footer */}
@@ -500,7 +769,7 @@ export function PayUCustomHostedModal({
           </span>
           <span>•</span>
           <span className="flex items-center gap-1">
-            <ShieldCheck className="w-3 h-3 text-emerald-600" /> PayU Custom Checkout
+            <ShieldCheck className="w-3 h-3 text-emerald-600" /> PayU Custom Merchant-Hosted
           </span>
         </div>
 
