@@ -98,6 +98,8 @@ export function PayUCustomHostedModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rawServerResponse, setRawServerResponse] = useState<any>(null);
+  const [latestVerifyData, setLatestVerifyData] = useState<any>(null);
+  const [verifyCount, setVerifyCount] = useState(0);
 
   const pollingIntervalRef = useRef<any>(null);
 
@@ -211,9 +213,6 @@ export function PayUCustomHostedModal({
   };
 
     // Poll server for payment confirmation via verify_payment command
-    const [latestVerifyData, setLatestVerifyData] = useState<any>(null);
-    const [verifyCount, setVerifyCount] = useState(0);
-
     const checkPaymentStatusOnce = async (txnidToCheck: string) => {
       try {
         const res = await fetch('/api/payu/custom/verify-payment', {
