@@ -23,18 +23,49 @@ const upload = multer({
   limits: { fileSize: 100 * 1024 * 1024 }
 });
 
-// Endpoint to parse response sheet URL
+// Endpoint to parse response sheet URL (Hardened against SSRF)
 app.post('/api/fetch-url', async (req, res) => {
   try {
     const { url } = req.body;
-    if (!url) {
-      return res.status(400).json({ error: "URL is required" });
+    if (!url || typeof url !== 'string') {
+      return res.status(400).json({ error: "Valid URL is required" });
     }
 
-    const response = await fetch(url, {
+    let parsedUrl: URL;
+    try {
+      parsedUrl = new URL(url.trim());
+    } catch {
+      return res.status(400).json({ error: "Malformed URL provided" });
+    }
+
+    // Enforce HTTP/HTTPS only
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      return res.status(400).json({ error: "Only http and https protocols are allowed" });
+    }
+
+    // SSRF Blocklist: Prevent loopback, private ranges, link-local, and cloud metadata (169.254.169.254)
+    const hostname = parsedUrl.hostname.toLowerCase();
+    const isPrivate = 
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname === '::1' ||
+      hostname === '0.0.0.0' ||
+      hostname === '169.254.169.254' ||
+      hostname.startsWith('10.') ||
+      hostname.startsWith('192.168.') ||
+      /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
+      hostname.endsWith('.internal') ||
+      hostname.endsWith('.local');
+
+    if (isPrivate) {
+      return res.status(403).json({ error: "Access to internal network addresses is forbidden" });
+    }
+
+    const response = await fetch(parsedUrl.href, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-      }
+      },
+      signal: AbortSignal.timeout(10000)
     });
 
     if (!response.ok) {
@@ -140,10 +171,27 @@ app.delete('/api/upload/delete', async (req, res) => {
   }
 });
 
+// In-memory rate limiting map for OTP email requests (Max 1 request every 30 seconds per IP/email)
+const authOtpRateLimitMap = new Map<string, number>();
+
 // Endpoint to send the login code via Resend
 app.post('/api/auth/send-code', async (req, res) => {
   const { email, name } = req.body;
-  if (!email) return res.status(400).json({ error: 'Email is required' });
+  if (!email || typeof email !== 'string' || !email.includes('@')) {
+    return res.status(400).json({ error: 'Valid email is required' });
+  }
+
+  const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
+  const rateLimitKey = `${clientIp}_${email.trim().toLowerCase()}`;
+  const lastSent = authOtpRateLimitMap.get(rateLimitKey);
+  const now = Date.now();
+
+  if (lastSent && (now - lastSent < 30000)) {
+    return res.status(429).json({ 
+      error: `Please wait ${Math.ceil((30000 - (now - lastSent)) / 1000)} seconds before requesting a new login code.` 
+    });
+  }
+  authOtpRateLimitMap.set(rateLimitKey, now);
 
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) {
