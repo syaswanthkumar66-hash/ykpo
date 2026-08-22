@@ -15,11 +15,13 @@ import {
   Copy,
   Check,
   RefreshCw,
-  ExternalLink
+  ExternalLink,
+  Clock
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import { db } from '../../firebase';
 import { collection, addDoc } from 'firebase/firestore';
+import { PayUDebugResponse } from './PayUDebugResponse';
 
 export interface PayUCustomItem {
   id: string;
@@ -95,6 +97,7 @@ export function PayUCustomHostedModal({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rawServerResponse, setRawServerResponse] = useState<any>(null);
 
   const pollingIntervalRef = useRef<any>(null);
 
@@ -170,6 +173,10 @@ export function PayUCustomHostedModal({
 
 
       const data = await res.json();
+      if (data.payuRawResponse) {
+        setRawServerResponse(data.payuRawResponse);
+      }
+
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Failed to generate UPI Intent.');
       }
@@ -200,6 +207,7 @@ export function PayUCustomHostedModal({
     } finally {
       setQrLoading(false);
     }
+
   };
 
   // Poll server for payment confirmation via verify_payment command
@@ -774,7 +782,11 @@ export function PayUCustomHostedModal({
             </div>
           )}
 
+          {/* Isolated Server Response Debug Section (Easy to toggle / remove) */}
+          <PayUDebugResponse rawResponse={rawServerResponse} error={error} />
+
         </div>
+
 
         {/* Footer */}
         <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-center gap-4 text-[11px] font-mono text-slate-400">
