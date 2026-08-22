@@ -528,7 +528,11 @@ app.post('/api/payu/initiate-custom-checkout', async (req, res) => {
     const formattedAmount = Number(amount).toFixed(2);
     const sanitizedProduct = String(productinfo).replace(/[^a-zA-Z0-9\s-_.]/g, '').slice(0, 100);
     const sanitizedFirstname = String(firstname).replace(/[^a-zA-Z0-9\s]/g, '').trim().slice(0, 50);
-    const customerPhone = phone ? String(phone).replace(/\D/g, '').slice(-10) : '8309080424';
+    const customerPhone = phone ? String(phone).replace(/\D/g, '').slice(-10) : '';
+
+    if (!customerPhone || customerPhone.length < 10) {
+      return res.status(400).json({ error: 'A valid 10-digit mobile phone number is required for transaction processing.' });
+    }
 
     console.log(`[PayU Audit Log] TS: ${new Date().toISOString()} | TXN: ${txnid} | Client IP: ${clientIp} | Customer: ${sanitizedFirstname} (${email}) | Amount: ${formattedAmount}`);
 
@@ -625,8 +629,12 @@ app.post('/api/payu/s2s-upi-intent', async (req, res) => {
     const formattedAmount = Number(amount).toFixed(2);
     const sanitizedProduct = String(productinfo).replace(/[^a-zA-Z0-9\s-_.]/g, '').slice(0, 100);
     const sanitizedFirstname = String(firstname).replace(/[^a-zA-Z0-9\s]/g, '').trim().slice(0, 50);
-    const customerPhone = phone ? String(phone).replace(/\D/g, '').slice(-10) : '8309080424';
-    const customerEmail = email && String(email).includes('@') ? String(email).trim() : 'customer@ykyash.in';
+    const customerPhone = phone ? String(phone).replace(/\D/g, '').slice(-10) : '';
+    const customerEmail = email && String(email).includes('@') ? String(email).trim() : '';
+
+    if (!customerPhone || customerPhone.length < 10 || !customerEmail) {
+      return res.status(400).json({ error: 'Valid customer phone number and email are required for transaction.' });
+    }
 
     // Hash formula: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
     const hashString = `${key}|${txnid}|${formattedAmount}|${sanitizedProduct}|${sanitizedFirstname}|${customerEmail}|${udf1}|${udf2}|${udf3}|||||||${salt}`;

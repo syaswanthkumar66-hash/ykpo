@@ -13,7 +13,7 @@ export default function Services() {
   const [formData, setFormData] = useState({
     firstname: '',
     email: '',
-    phone: '8309080424',
+    phone: '',
     projectId: '',
     milestoneTitle: 'Phase 1: Architecture & Kickoff',
     productinfo: SERVICES[0].title
@@ -250,7 +250,7 @@ export default function Services() {
                     required
                     value={formData.phone}
                     onChange={e => setFormData({ ...formData, phone: e.target.value.replace(/\D/g, '').slice(0, 10) })}
-                    placeholder="8309080424"
+                    placeholder="e.g. 9876543210"
                     className="w-full glass-input rounded-xl py-3 px-4 text-sm font-mono"
                   />
                 </div>
