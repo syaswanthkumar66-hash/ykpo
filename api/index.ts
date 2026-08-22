@@ -6,10 +6,17 @@ import multer from 'multer';
 import { put, del, list } from '@vercel/blob';
 import { handleUpload } from '@vercel/blob/client';
 import webpush from 'web-push';
+import payuHostedRouter from './payu/payuHosted.js';
+import payuCustomHostedRouter from './payu/payuCustomHosted.js';
 
 const app = express();
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// Mount isolated PayU Hosted and Custom Hosted Router modules
+app.use('/api/payu/hosted', payuHostedRouter);
+app.use('/api/payu/custom', payuCustomHostedRouter);
+
 
 const upload = multer({ 
   storage: multer.memoryStorage(),

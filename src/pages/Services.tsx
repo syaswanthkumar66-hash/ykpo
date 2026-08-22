@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Check, CreditCard, ShieldCheck, Sparkles, Lock, AlertCircle, FileCode, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Check, CreditCard, ShieldCheck, Sparkles, Lock, AlertCircle, FileCode, CheckCircle2, Globe } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { SERVICES, MERCHANT_KYC_DETAILS } from '../data/portfolioData';
-import PayUCustomCheckoutModal, { PayUCheckoutItem } from '../components/PayUCustomCheckoutModal';
+import PayUHostedCheckoutModal, { PayUHostedCheckoutItem } from '../components/payu/PayUHostedCheckoutModal';
+import PayUCustomHostedModal, { PayUCustomItem } from '../components/payu/PayUCustomHostedModal';
 
 export default function Services() {
   const [selectedService, setSelectedService] = useState(SERVICES[0]);
   const [customAmount, setCustomAmount] = useState('');
   const [isCustom, setIsCustom] = useState(false);
-  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [hostedModalOpen, setHostedModalOpen] = useState(false);
+  const [customModalOpen, setCustomModalOpen] = useState(false);
+
   
   const [formData, setFormData] = useState({
     firstname: '',
@@ -37,25 +40,30 @@ export default function Services() {
     setFormData(prev => ({ ...prev, productinfo: 'Custom Project Milestone Payment' }));
   };
 
-  const initiatePayment = (e: React.FormEvent) => {
-    e.preventDefault();
+  const validateForm = () => {
     setError(null);
-
-    const amount = isCustom ? Number(customAmount) : selectedService.priceINR;
-
     if (!formData.firstname.trim() || !formData.email.trim()) {
       setError('Please provide your name and email address.');
-      return;
+      return false;
     }
     if (isCustom && (!customAmount || Number(customAmount) < 1)) {
       setError('Please enter a milestone amount of at least ₹1.');
-      return;
+      return false;
     }
-
-    setCheckoutModalOpen(true);
+    return true;
   };
 
-  const activeCheckoutItem: PayUCheckoutItem = {
+  const initiateHostedPayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) setHostedModalOpen(true);
+  };
+
+  const initiateCustomPayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) setCustomModalOpen(true);
+  };
+
+  const activeCheckoutItem: PayUHostedCheckoutItem = {
     id: isCustom ? 'custom_milestone' : selectedService.id,
     title: isCustom ? `Custom Milestone: ${formData.projectId || 'SOW Agreement'}` : `${selectedService.title} (${formData.milestoneTitle})`,
     priceINR: isCustom ? Number(customAmount || 0) : selectedService.priceINR,
@@ -212,7 +220,7 @@ export default function Services() {
                 </div>
               </div>
 
-              <form onSubmit={initiatePayment} className="space-y-4">
+              <form onSubmit={initiateHostedPayment} className="space-y-4">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-[#12181A] mb-1.5 font-mono">
                     Client / Company Name *
@@ -311,22 +319,34 @@ export default function Services() {
                   </div>
                 )}
 
-                {/* Total & Submit */}
-                <div className="pt-4 border-t border-[#557B83]/15">
-                  <div className="flex justify-between items-center mb-4">
+                {/* Total & Submit Options */}
+                <div className="pt-4 border-t border-[#557B83]/15 space-y-3">
+                  <div className="flex justify-between items-center mb-2">
                     <span className="text-xs uppercase font-bold text-[#557B83] font-mono">Total Milestone:</span>
                     <span className="text-2xl font-display font-bold text-[#12181A]">
                       ₹{isCustom ? (Number(customAmount) || 0).toLocaleString('en-IN') : selectedService.priceINR.toLocaleString('en-IN')} INR
                     </span>
                   </div>
 
-                  <button
-                    type="submit"
-                    className="w-full py-4 rounded-2xl font-bold uppercase tracking-widest text-xs btn-turtle-primary flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all"
-                  >
-                    <CreditCard className="w-4 h-4 text-white" />
-                    Proceed to PayU Custom Checkout (₹{isCustom ? (Number(customAmount) || 0).toLocaleString('en-IN') : selectedService.priceINR.toLocaleString('en-IN')})
-                  </button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={initiateHostedPayment}
+                      className="w-full py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-dark flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all"
+                    >
+                      <Globe className="w-4 h-4 text-[#E5EFC1]" />
+                      PayU Hosted Gateway
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={initiateCustomPayment}
+                      className="w-full py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-primary flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all"
+                    >
+                      <CreditCard className="w-4 h-4 text-white" />
+                      Custom In-App Checkout
+                    </button>
+                  </div>
                 </div>
               </form>
 
@@ -341,10 +361,20 @@ export default function Services() {
 
         </div>
 
-        {/* PayU Merchant Hosted Modal */}
-        <PayUCustomCheckoutModal
-          isOpen={checkoutModalOpen}
-          onClose={() => setCheckoutModalOpen(false)}
+        {/* 1. PayU Hosted Modal */}
+        <PayUHostedCheckoutModal
+          isOpen={hostedModalOpen}
+          onClose={() => setHostedModalOpen(false)}
+          item={activeCheckoutItem}
+          initialCustomerName={formData.firstname}
+          initialCustomerEmail={formData.email}
+          initialCustomerPhone={formData.phone}
+        />
+
+        {/* 2. PayU Custom Hosted Modal */}
+        <PayUCustomHostedModal
+          isOpen={customModalOpen}
+          onClose={() => setCustomModalOpen(false)}
           item={activeCheckoutItem}
           initialCustomerName={formData.firstname}
           initialCustomerEmail={formData.email}

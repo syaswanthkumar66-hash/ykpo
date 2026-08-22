@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Check, ShieldCheck, Sparkles, CreditCard, Zap, AlertCircle, Lock, PackageCheck, Download } from 'lucide-react';
+import { ShoppingBag, Check, ShieldCheck, Sparkles, CreditCard, Zap, AlertCircle, Lock, PackageCheck, Download, Globe } from 'lucide-react';
 import { DIGITAL_PRODUCTS } from '../data/portfolioData';
 import { DigitalProduct } from '../types';
 import { Link } from 'react-router-dom';
-import PayUCustomCheckoutModal from '../components/PayUCustomCheckoutModal';
+import PayUHostedCheckoutModal from '../components/payu/PayUHostedCheckoutModal';
+import PayUCustomHostedModal from '../components/payu/PayUCustomHostedModal';
 
 export default function Store() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [activeProduct, setActiveProduct] = useState<DigitalProduct | null>(null);
+  const [hostedProduct, setHostedProduct] = useState<DigitalProduct | null>(null);
+  const [customProduct, setCustomProduct] = useState<DigitalProduct | null>(null);
 
   const categories = [
     { id: 'all', label: 'All Digital Products' },
@@ -76,23 +78,35 @@ export default function Store() {
                 <span className="text-[11px] text-[#A2D5AB] font-mono">Direct NPCI Live UPI</span>
               </div>
               <h2 className="text-base sm:text-lg font-bold text-white">
-                Test Real-Time Direct UPI Payment for Just ₹1.00
+                Test Real-Time Payment for Just ₹1.00
               </h2>
               <p className="text-xs text-[#E5EFC1]/80 max-w-xl">
-                Scan dynamic NPCI UPI QR code, launch GPay / PhonePe / Paytm / CRED / BHIM, and test instant license verification & downloads with ₹1.
+                Test PayU Hosted checkout or in-app Custom checkout with instant verification for ₹1.
               </p>
             </div>
           </div>
-          <button
-            onClick={() => {
-              const testItem = DIGITAL_PRODUCTS.find(p => p.id === 'prod-test-rupee');
-              if (testItem) setActiveProduct(testItem);
-            }}
-            className="w-full sm:w-auto px-6 py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs bg-[#E5EFC1] text-[#12181A] hover:bg-white hover:shadow-lg transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-md"
-          >
-            <Zap className="w-4 h-4 text-[#1D5C58] fill-current" />
-            Test ₹1 Payment Now
-          </button>
+          <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => {
+                const testItem = DIGITAL_PRODUCTS.find(p => p.id === 'prod-test-rupee');
+                if (testItem) setHostedProduct(testItem);
+              }}
+              className="px-4 py-3 rounded-2xl font-bold uppercase tracking-wider text-xs bg-[#E5EFC1] text-[#12181A] hover:bg-white transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+            >
+              <Globe className="w-4 h-4 text-[#1D5C58]" />
+              PayU Hosted (₹1)
+            </button>
+            <button
+              onClick={() => {
+                const testItem = DIGITAL_PRODUCTS.find(p => p.id === 'prod-test-rupee');
+                if (testItem) setCustomProduct(testItem);
+              }}
+              className="px-4 py-3 rounded-2xl font-bold uppercase tracking-wider text-xs bg-[#39AEA9] text-white hover:bg-white hover:text-[#12181A] transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
+            >
+              <CreditCard className="w-4 h-4" />
+              Custom Hosted (₹1)
+            </button>
+          </div>
         </div>
 
         {/* Product Cards Grid */}
@@ -138,32 +152,50 @@ export default function Store() {
                 </div>
               </div>
 
-              <div className="pt-6 border-t border-[#557B83]/15 flex items-center justify-between gap-4">
+              <div className="pt-6 border-t border-[#557B83]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="text-xs text-[#557B83]">
                   <span className="block font-semibold text-[#12181A] font-mono">{product.fileSize}</span>
                   <span className="flex items-center gap-1 text-[11px] text-[#1D5C58] font-bold">
                     <Zap className="w-3 h-3 text-[#39AEA9] fill-current" /> Instant UPI & ZIP Download
                   </span>
                 </div>
-                <button
-                  onClick={() => setActiveProduct(product)}
-                  className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-dark cursor-pointer shadow-md hover:shadow-lg transition-all"
-                >
-                  <Zap className="w-4 h-4 text-[#E5EFC1] fill-current" /> Instant Buy (₹{product.priceINR})
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setHostedProduct(product)}
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-dark cursor-pointer shadow-md hover:shadow-lg transition-all"
+                    title="Pay via Official PayU Hosted Prebuilt Gateway"
+                  >
+                    <Globe className="w-3.5 h-3.5 text-[#E5EFC1]" /> PayU Hosted
+                  </button>
+                  <button
+                    onClick={() => setCustomProduct(product)}
+                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-glass text-[#1D5C58] cursor-pointer shadow-sm hover:shadow-md transition-all"
+                    title="Pay via Custom In-App Merchant Hosted Checkout"
+                  >
+                    <CreditCard className="w-3.5 h-3.5 text-[#39AEA9]" /> Custom In-App
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* PayU Merchant-Hosted Custom Checkout Modal */}
-        <PayUCustomCheckoutModal
-          isOpen={Boolean(activeProduct)}
-          onClose={() => setActiveProduct(null)}
-          item={activeProduct}
+        {/* 1. PayU Hosted Prebuilt Checkout Modal */}
+        <PayUHostedCheckoutModal
+          isOpen={Boolean(hostedProduct)}
+          onClose={() => setHostedProduct(null)}
+          item={hostedProduct}
+        />
+
+        {/* 2. PayU Custom Merchant-Hosted Checkout Modal */}
+        <PayUCustomHostedModal
+          isOpen={Boolean(customProduct)}
+          onClose={() => setCustomProduct(null)}
+          item={customProduct}
         />
 
       </div>
     </div>
   );
 }
+

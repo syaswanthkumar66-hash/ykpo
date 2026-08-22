@@ -242,7 +242,8 @@ export const MERCHANT_KYC_DETAILS = {
   phone: '+91 83090 80424',
   registeredAddress: '602/1, PEERLACHAVADI STREET, Srikalahasti, Chittoor - 517644, Andhra Pradesh, India',
   operatingHours: 'Monday – Saturday: 10:00 AM – 7:00 PM IST',
-  grievanceOfficer: 'S. Yaswanth Kumar (Lead Developer & Proprietor)'
+  grievanceOfficer: 'S. Yaswanth Kumar (Lead Developer & Proprietor)',
+  gstNumber: '' // Composition / Unregistered
 };
 
 export const LEGAL_TEXTS = {

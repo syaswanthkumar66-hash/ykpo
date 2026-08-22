@@ -1,0 +1,311 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  X, 
+  ShieldCheck, 
+  Lock, 
+  ExternalLink,
+  Zap,
+  Globe
+} from 'lucide-react';
+import { db } from '../../firebase';
+import { collection, addDoc } from 'firebase/firestore';
+
+export interface PayUHostedCheckoutItem {
+  id: string;
+  title: string;
+  priceINR: number;
+  description?: string;
+  category?: string;
+  fileSize?: string;
+  type?: 'product' | 'service';
+}
+
+interface PayUHostedCheckoutModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  item: PayUHostedCheckoutItem | null;
+  initialCustomerName?: string;
+  initialCustomerEmail?: string;
+  initialCustomerPhone?: string;
+}
+
+/**
+ * PayU Prebuilt Hosted Checkout Modal
+ * Seamlessly posts directly to PayU's Hosted Payment Page (https://secure.payu.in/_payment)
+ * Reference: https://docs.payu.in/docs/prebuilt-checkout-payu-hosted
+ */
+export function PayUHostedCheckoutModal({
+  isOpen,
+  onClose,
+  item,
+  initialCustomerName = '',
+  initialCustomerEmail = '',
+  initialCustomerPhone = ''
+}: PayUHostedCheckoutModalProps) {
+  const [customerName, setCustomerName] = useState(initialCustomerName);
+  const [customerEmail, setCustomerEmail] = useState(initialCustomerEmail);
+  const [customerPhone, setCustomerPhone] = useState(initialCustomerPhone);
+  const [termsAgreed, setTermsAgreed] = useState(true);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialCustomerName && !customerName) setCustomerName(initialCustomerName);
+    if (initialCustomerEmail && !customerEmail) setCustomerEmail(initialCustomerEmail);
+    if (initialCustomerPhone && !customerPhone) setCustomerPhone(initialCustomerPhone);
+  }, [initialCustomerName, initialCustomerEmail, initialCustomerPhone]);
+
+  if (!isOpen || !item) return null;
+
+  const handleProceedToPayUGateway = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (loading) return;
+    setError(null);
+
+    if (!customerName.trim()) {
+      setError('Please enter your legal name for commercial license issuance.');
+      return;
+    }
+    if (!customerEmail.trim() || !customerEmail.includes('@')) {
+      setError('Please enter a valid email address for instant digital asset delivery.');
+      return;
+    }
+    if (!customerPhone.trim() || customerPhone.replace(/\D/g, '').length < 10) {
+      setError('Please enter a valid 10-digit mobile number for transaction SMS.');
+      return;
+    }
+    if (!termsAgreed) {
+      setError('Please accept the Commercial License & Refund Policy.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const uniqueTxnid = 'YKH' + Date.now() + Math.floor(10000 + Math.random() * 90000);
+
+      const payload = {
+        txnid: uniqueTxnid,
+        amount: item.priceINR,
+        productinfo: item.title,
+        firstname: customerName.trim(),
+        email: customerEmail.trim(),
+        phone: customerPhone.replace(/\D/g, ''),
+        udf1: item.id,
+        udf2: item.type || 'digital_product',
+        udf3: customerPhone
+      };
+
+      // Optional database order log
+      try {
+        if (db) {
+          await addDoc(collection(db, 'inquiries'), {
+            name: customerName,
+            email: customerEmail,
+            phone: customerPhone,
+            txnid: uniqueTxnid,
+            productTitle: item.title,
+            priceINR: item.priceINR,
+            paymentMethod: 'payu_hosted_prebuilt',
+            status: 'initiated',
+            timestamp: new Date().toISOString(),
+            source: 'payu_hosted_gateway'
+          });
+        }
+      } catch (dbErr) {
+        console.warn('Firestore order logging notice:', dbErr);
+      }
+
+      // Call dedicated PayU Hosted initiation endpoint
+      const response = await fetch('/api/payu/hosted/initiate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to initialize PayU Hosted session.');
+      }
+
+      // Auto-submit standard HTML Form to official PayU Hosted Gateway (https://secure.payu.in/_payment)
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = data.actionUrl || 'https://secure.payu.in/_payment';
+      form.target = '_self';
+      form.style.display = 'none';
+
+      Object.entries(data.payuParams || {}).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = String(value);
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+
+    } catch (err: any) {
+      console.error('[PayU Hosted Gateway Error]:', err);
+      setError(err.message || 'Unable to redirect to PayU hosted gateway. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+      <div className="bg-white max-w-lg w-full rounded-3xl shadow-2xl relative border border-slate-200 overflow-hidden my-auto max-h-[94vh] flex flex-col">
+        
+        {/* Top Header */}
+        <div className="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-[#1D5C58]/10 text-[#1D5C58] border border-[#1D5C58]/20">
+              <Globe className="w-5 h-5 text-[#1D5C58]" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-display font-extrabold text-slate-900">
+                  PayU Hosted Checkout
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                  Prebuilt Hosted
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 font-mono">
+                Redirects to Official PayU Gateway Portal
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl bg-white hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors border border-slate-200 cursor-pointer"
+            title="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Modal Body */}
+        <div className="p-6 overflow-y-auto space-y-6">
+          {/* Item Box */}
+          <div className="bg-gradient-to-br from-slate-50 to-slate-100/70 border border-slate-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+            <div>
+              <span className="text-[11px] uppercase font-bold tracking-wider text-[#1D5C58] block font-mono mb-0.5">
+                Item & Commercial License
+              </span>
+              <h4 className="text-lg font-display font-bold text-slate-900">
+                {item.title}
+              </h4>
+              {item.fileSize && (
+                <span className="text-xs text-slate-500 font-mono">Package Size: {item.fileSize} ZIP</span>
+              )}
+            </div>
+            <div className="sm:text-right shrink-0 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-200">
+              <span className="text-[10px] text-slate-400 block uppercase font-mono">Total Amount Payable</span>
+              <span className="text-2xl font-display font-extrabold text-slate-900">
+                ₹{item.priceINR.toLocaleString('en-IN')} <span className="text-xs font-mono font-normal text-slate-500">INR</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleProceedToPayUGateway} className="space-y-4">
+            <div className="space-y-3">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-900 font-mono flex items-center justify-between">
+                <span>Customer Contact & License Info</span>
+                <span className="text-[11px] text-slate-400 font-normal">All fields required</span>
+              </label>
+
+              <div>
+                <input
+                  type="text"
+                  required
+                  placeholder="Full Legal Name *"
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 font-medium focus:outline-none focus:ring-2 focus:ring-[#1D5C58] focus:bg-white transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <input
+                    type="email"
+                    required
+                    placeholder="Email Address *"
+                    value={customerEmail}
+                    onChange={(e) => setCustomerEmail(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 font-medium focus:outline-none focus:ring-2 focus:ring-[#1D5C58] focus:bg-white transition-all"
+                  />
+                </div>
+                <div>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="Mobile Number (10 digits) *"
+                    value={customerPhone}
+                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 font-medium focus:outline-none focus:ring-2 focus:ring-[#1D5C58] focus:bg-white transition-all"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Terms checkbox */}
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-slate-50 border border-slate-200/80">
+              <input
+                type="checkbox"
+                id="terms-hosted"
+                checked={termsAgreed}
+                onChange={(e) => setTermsAgreed(e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#1D5C58] focus:ring-[#1D5C58] cursor-pointer"
+              />
+              <label htmlFor="terms-hosted" className="text-xs text-slate-600 cursor-pointer select-none">
+                I agree to the <span className="font-semibold text-slate-800">Commercial License Terms</span> and understand this is an instant digital product delivery.
+              </label>
+            </div>
+
+            {error && (
+              <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700 font-medium">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-4 px-6 rounded-2xl bg-[#1D5C58] hover:bg-[#164845] text-white font-mono text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+            >
+              {loading ? (
+                <span>Redirecting to PayU Hosted Gateway...</span>
+              ) : (
+                <>
+                  <ExternalLink className="w-4 h-4 text-[#E5EFC1]" />
+                  <span>Proceed to PayU Hosted Portal (₹{item.priceINR})</span>
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex items-center justify-center gap-4 text-[11px] font-mono text-slate-400">
+          <span className="flex items-center gap-1">
+            <Lock className="w-3 h-3 text-[#1D5C58]" /> 256-Bit SSL
+          </span>
+          <span>•</span>
+          <span className="flex items-center gap-1">
+            <ShieldCheck className="w-3 h-3 text-emerald-600" /> PayU Verified Gateway
+          </span>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+export default PayUHostedCheckoutModal;
