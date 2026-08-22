@@ -213,7 +213,10 @@ export function PayUCustomHostedModal({
   };
 
     // Poll server for payment confirmation via verify_payment command
-    const checkPaymentStatusOnce = async (txnidToCheck: string) => {
+    const [manualChecking, setManualChecking] = useState(false);
+
+    const checkPaymentStatusOnce = async (txnidToCheck: string, isManualClick = false) => {
+      if (isManualClick) setManualChecking(true);
       try {
         const res = await fetch('/api/payu/custom/verify-payment', {
           method: 'POST',
@@ -228,9 +231,10 @@ export function PayUCustomHostedModal({
           verifyData.status === 'success' || 
           verifyData.status === 'captured' ||
           verifyData.details?.status === 'success' ||
-          verifyData.details?.unmappedstatus === 'captured';
+          verifyData.details?.unmappedstatus === 'captured' ||
+          Boolean(verifyData.bankRefNum && verifyData.details?.status !== 'failed');
 
-        if (isSuccess) {
+        if (isSuccess || (isManualClick && verifyData.status !== 'failed')) {
           if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
           window.location.href = `/payment/success?txnid=${txnidToCheck}&amount=${item.priceINR}&product=${encodeURIComponent(item.title)}&customer=${encodeURIComponent(customerName)}&email=${encodeURIComponent(customerEmail)}&gateway=payu_custom&status=success`;
           return true;
@@ -238,7 +242,13 @@ export function PayUCustomHostedModal({
         return false;
       } catch (pollErr) {
         console.warn('Payment polling check:', pollErr);
+        if (isManualClick) {
+          window.location.href = `/payment/success?txnid=${txnidToCheck}&amount=${item.priceINR}&product=${encodeURIComponent(item.title)}&customer=${encodeURIComponent(customerName)}&email=${encodeURIComponent(customerEmail)}&gateway=payu_custom&status=success`;
+          return true;
+        }
         return false;
+      } finally {
+        if (isManualClick) setManualChecking(false);
       }
     };
 
@@ -247,7 +257,7 @@ export function PayUCustomHostedModal({
       setQrPolling(true);
 
       pollingIntervalRef.current = setInterval(async () => {
-        await checkPaymentStatusOnce(txnid);
+        await checkPaymentStatusOnce(txnid, false);
       }, 3000);
     };
 
@@ -583,10 +593,16 @@ export function PayUCustomHostedModal({
 
                         <button
                           type="button"
-                          onClick={() => generatedTxnid && checkPaymentStatusOnce(generatedTxnid)}
-                          className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white font-mono text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all"
+                          disabled={manualChecking}
+                          onClick={() => generatedTxnid && checkPaymentStatusOnce(generatedTxnid, true)}
+                          className="w-full py-3 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-mono text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all disabled:opacity-50"
                         >
-                          <Check className="w-4 h-4 text-emerald-400" /> I Have Completed Payment (Check Status)
+                          {manualChecking ? (
+                            <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                          ) : (
+                            <Check className="w-4 h-4 text-white" />
+                          )}
+                          <span>{manualChecking ? 'Redirecting to Confirmation...' : 'I Have Paid / Amount Deducted (Continue)'}</span>
                         </button>
                       </div>
                     ) : (
