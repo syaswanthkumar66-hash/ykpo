@@ -3,14 +3,12 @@ import { ArrowLeft, Check, CreditCard, ShieldCheck, Sparkles, Lock, AlertCircle,
 import { Link } from 'react-router-dom';
 import { SERVICES, MERCHANT_KYC_DETAILS } from '../data/portfolioData';
 import PayUHostedCheckoutModal, { PayUHostedCheckoutItem } from '../components/payu/PayUHostedCheckoutModal';
-import PayUCustomHostedModal, { PayUCustomItem } from '../components/payu/PayUCustomHostedModal';
 
 export default function Services() {
   const [selectedService, setSelectedService] = useState(SERVICES[0]);
   const [customAmount, setCustomAmount] = useState('');
   const [isCustom, setIsCustom] = useState(false);
   const [hostedModalOpen, setHostedModalOpen] = useState(false);
-  const [customModalOpen, setCustomModalOpen] = useState(false);
 
   
   const [formData, setFormData] = useState({
@@ -56,11 +54,6 @@ export default function Services() {
   const initiateHostedPayment = (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) setHostedModalOpen(true);
-  };
-
-  const initiateCustomPayment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateForm()) setCustomModalOpen(true);
   };
 
   const activeCheckoutItem: PayUHostedCheckoutItem = {
@@ -328,23 +321,15 @@ export default function Services() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
                     <button
                       type="button"
                       onClick={initiateHostedPayment}
-                      className="w-full py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-dark flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all"
+                      className="w-full py-4 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-dark flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all"
+                      title="Pay securely via PayU Official Hosted Checkout (UPI, Cards, NetBanking, QR, Wallets)"
                     >
                       <Globe className="w-4 h-4 text-[#E5EFC1]" />
-                      PayU Hosted Gateway
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={initiateCustomPayment}
-                      className="w-full py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-primary flex items-center justify-center gap-2 cursor-pointer shadow-md hover:shadow-lg transition-all"
-                    >
-                      <CreditCard className="w-4 h-4 text-white" />
-                      Custom In-App Checkout
+                      <span>Proceed to PayU Secure Payment (₹{isCustom ? (Number(customAmount) || 0).toLocaleString('en-IN') : selectedService.priceINR.toLocaleString('en-IN')})</span>
                     </button>
                   </div>
                 </div>
@@ -361,20 +346,10 @@ export default function Services() {
 
         </div>
 
-        {/* 1. PayU Hosted Modal */}
+        {/* PayU Hosted Modal */}
         <PayUHostedCheckoutModal
           isOpen={hostedModalOpen}
           onClose={() => setHostedModalOpen(false)}
-          item={activeCheckoutItem}
-          initialCustomerName={formData.firstname}
-          initialCustomerEmail={formData.email}
-          initialCustomerPhone={formData.phone}
-        />
-
-        {/* 2. PayU Custom Hosted Modal */}
-        <PayUCustomHostedModal
-          isOpen={customModalOpen}
-          onClose={() => setCustomModalOpen(false)}
           item={activeCheckoutItem}
           initialCustomerName={formData.firstname}
           initialCustomerEmail={formData.email}

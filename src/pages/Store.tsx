@@ -4,12 +4,10 @@ import { DIGITAL_PRODUCTS } from '../data/portfolioData';
 import { DigitalProduct } from '../types';
 import { Link } from 'react-router-dom';
 import PayUHostedCheckoutModal from '../components/payu/PayUHostedCheckoutModal';
-import PayUCustomHostedModal from '../components/payu/PayUCustomHostedModal';
 
 export default function Store() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [hostedProduct, setHostedProduct] = useState<DigitalProduct | null>(null);
-  const [customProduct, setCustomProduct] = useState<DigitalProduct | null>(null);
 
   const categories = [
     { id: 'all', label: 'All Digital Products' },
@@ -162,17 +160,10 @@ export default function Store() {
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setHostedProduct(product)}
-                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-dark cursor-pointer shadow-md hover:shadow-lg transition-all"
-                    title="Pay via Official PayU Hosted Prebuilt Gateway"
+                    className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-dark cursor-pointer shadow-md hover:shadow-lg transition-all"
+                    title="Pay securely via PayU Official Payment Gateway (UPI, Cards, NetBanking, QR, Wallets)"
                   >
-                    <Globe className="w-3.5 h-3.5 text-[#E5EFC1]" /> PayU Hosted
-                  </button>
-                  <button
-                    onClick={() => setCustomProduct(product)}
-                    className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-3 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-glass text-[#1D5C58] cursor-pointer shadow-sm hover:shadow-md transition-all"
-                    title="Pay via Custom In-App Merchant Hosted Checkout"
-                  >
-                    <CreditCard className="w-3.5 h-3.5 text-[#39AEA9]" /> Custom In-App
+                    <Globe className="w-4 h-4 text-[#E5EFC1]" /> Buy Now (PayU Hosted)
                   </button>
                 </div>
               </div>
@@ -180,18 +171,11 @@ export default function Store() {
           ))}
         </div>
 
-        {/* 1. PayU Hosted Prebuilt Checkout Modal */}
+        {/* PayU Hosted Prebuilt Checkout Modal */}
         <PayUHostedCheckoutModal
           isOpen={Boolean(hostedProduct)}
           onClose={() => setHostedProduct(null)}
           item={hostedProduct}
-        />
-
-        {/* 2. PayU Custom Merchant-Hosted Checkout Modal */}
-        <PayUCustomHostedModal
-          isOpen={Boolean(customProduct)}
-          onClose={() => setCustomProduct(null)}
-          item={customProduct}
         />
 
       </div>
