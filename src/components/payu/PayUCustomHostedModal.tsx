@@ -66,7 +66,7 @@ export function PayUCustomHostedModal({
   initialCustomerPhone = ''
 }: PayUCustomHostedModalProps) {
   const [activeTab, setActiveTab] = useState<PaymentTab>('upi');
-  const [upiMode, setUpiMode] = useState<UpiMode>('vpa');
+  const [upiMode, setUpiMode] = useState<UpiMode>('qr');
   
   // Customer basic info
   const [customerName, setCustomerName] = useState(initialCustomerName);
@@ -521,175 +521,109 @@ export function PayUCustomHostedModal({
 
             {/* Sub-tab / Controls container */}
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 mt-2">
-              
-              {/* UPI Tab with QR, Intent & VPA Submodes */}
+                           {/* UPI Tab with Dynamic QR, 1-Click Apps, and VPA */}
               {activeTab === 'upi' && (
                 <div className="space-y-4">
-                  {/* UPI Submode toggle */}
-                  <div className="flex items-center justify-center gap-1 p-1 bg-white rounded-xl border border-slate-200 text-xs font-mono">
-                    <button
-                      type="button"
-                      onClick={() => setUpiMode('vpa')}
-                      className={`flex-1 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                        upiMode === 'vpa' ? 'bg-teal-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      <Smartphone className="w-3 h-3" /> UPI VPA Collect
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setUpiMode('qr');
-                        if (!qrCodeDataUrl) handleGenerateUpiIntentOrQr();
-                      }}
-                      className={`flex-1 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                        upiMode === 'qr' ? 'bg-teal-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      <QrCode className="w-3 h-3" /> Dynamic QR Code
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setUpiMode('intent')}
-                      className={`flex-1 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                        upiMode === 'intent' ? 'bg-teal-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      <Zap className="w-3 h-3" /> UPI Apps Intent
-                    </button>
-                  </div>
+                  {/* Dynamic QR Display & Generation */}
+                  <div className="text-center space-y-3">
+                    {qrLoading ? (
+                      <div className="py-8 flex flex-col items-center justify-center gap-2">
+                        <RefreshCw className="w-6 h-6 text-teal-700 animate-spin" />
+                        <span className="text-xs font-mono text-slate-500">Generating NPCI Dynamic QR Code & UPI Links...</span>
+                      </div>
+                    ) : qrCodeDataUrl ? (
+                      <div className="flex flex-col items-center space-y-3">
+                        <div className="p-3 bg-white border-2 border-slate-200 rounded-2xl shadow-sm">
+                          <img src={qrCodeDataUrl} alt="PayU Dynamic UPI QR" className="w-48 h-48 mx-auto" />
+                        </div>
+                        <p className="text-xs text-slate-700 font-bold">
+                          Scan with GPay, PhonePe, Paytm, BHIM, CRED or any UPI App
+                        </p>
 
-
-                  {/* 1. UPI Intent Apps */}
-                  {upiMode === 'intent' && (
-                    <div className="space-y-3 text-center">
-                      <p className="text-xs text-slate-600">
-                        Launch your preferred UPI app directly to approve ₹{item.priceINR}.
-                      </p>
-
-                      {!upiIntentUri ? (
-                        <button
-                          type="button"
-                          onClick={handleGenerateUpiIntentOrQr}
-                          disabled={qrLoading}
-                          className="w-full py-3 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all disabled:opacity-50"
-                        >
-                          {qrLoading ? (
-                            <span>Generating UPI Intent Session...</span>
-                          ) : (
-                            <>
-                              <Zap className="w-4 h-4 text-emerald-300" />
-                              <span>Generate 1-Click UPI App Links</span>
-                            </>
-                          )}
-                        </button>
-                      ) : (
-                        <div className="space-y-2.5">
+                        {/* 1-Click UPI App Links */}
+                        <div className="w-full pt-1">
+                          <span className="text-[11px] font-mono text-slate-500 block mb-1.5 uppercase font-bold">
+                            Or Tap to Open UPI App:
+                          </span>
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             <a
                               href={upiAppUris.gpay || upiIntentUri}
-                              className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-teal-500 hover:shadow-md transition-all text-center group font-mono text-xs font-bold text-slate-800 flex flex-col items-center gap-1"
+                              className="p-2 rounded-xl border border-slate-200 bg-white hover:border-blue-500 hover:shadow-xs transition-all text-center font-mono text-xs font-bold text-slate-800 flex items-center justify-center gap-1.5"
                             >
-                              <Smartphone className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform" />
-                              <span>Google Pay</span>
+                              <Smartphone className="w-4 h-4 text-blue-600" />
+                              <span>GPay</span>
                             </a>
                             <a
                               href={upiAppUris.phonepe || upiIntentUri}
-                              className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-teal-500 hover:shadow-md transition-all text-center group font-mono text-xs font-bold text-slate-800 flex flex-col items-center gap-1"
+                              className="p-2 rounded-xl border border-slate-200 bg-white hover:border-purple-500 hover:shadow-xs transition-all text-center font-mono text-xs font-bold text-slate-800 flex items-center justify-center gap-1.5"
                             >
-                              <Smartphone className="w-5 h-5 text-purple-600 group-hover:scale-110 transition-transform" />
+                              <Smartphone className="w-4 h-4 text-purple-600" />
                               <span>PhonePe</span>
                             </a>
                             <a
                               href={upiAppUris.paytm || upiIntentUri}
-                              className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-teal-500 hover:shadow-md transition-all text-center group font-mono text-xs font-bold text-slate-800 flex flex-col items-center gap-1"
+                              className="p-2 rounded-xl border border-slate-200 bg-white hover:border-cyan-500 hover:shadow-xs transition-all text-center font-mono text-xs font-bold text-slate-800 flex items-center justify-center gap-1.5"
                             >
-                              <Smartphone className="w-5 h-5 text-sky-600 group-hover:scale-110 transition-transform" />
+                              <Smartphone className="w-4 h-4 text-cyan-600" />
                               <span>Paytm</span>
                             </a>
                             <a
                               href={upiAppUris.cred || upiIntentUri}
-                              className="p-2.5 rounded-xl border border-slate-200 bg-white hover:border-teal-500 hover:shadow-md transition-all text-center group font-mono text-xs font-bold text-slate-800 flex flex-col items-center gap-1"
+                              className="p-2 rounded-xl border border-slate-200 bg-white hover:border-emerald-500 hover:shadow-xs transition-all text-center font-mono text-xs font-bold text-slate-800 flex items-center justify-center gap-1.5"
                             >
-                              <Smartphone className="w-5 h-5 text-slate-900 group-hover:scale-110 transition-transform" />
-                              <span>CRED / BHIM</span>
+                              <Smartphone className="w-4 h-4 text-slate-900" />
+                              <span>BHIM/CRED</span>
                             </a>
                           </div>
-
-                          <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] font-mono text-emerald-800 flex items-center justify-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                            <span>Listening for transaction authorization in background...</span>
-                          </div>
                         </div>
-                      )}
-                    </div>
-                  )}
 
-                  {/* 2. Dynamic QR Code */}
-                  {upiMode === 'qr' && (
-                    <div className="text-center space-y-3">
-                      {qrLoading ? (
-                        <div className="py-8 flex flex-col items-center justify-center gap-2">
-                          <RefreshCw className="w-6 h-6 text-teal-700 animate-spin" />
-                          <span className="text-xs font-mono text-slate-500">Generating NPCI Dynamic QR Code...</span>
+                        <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] font-mono text-emerald-800 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                          <span>Auto-verifying payment every 3s...</span>
                         </div>
-                      ) : qrCodeDataUrl ? (
-                        <div className="flex flex-col items-center space-y-2">
-                          <div className="p-3 bg-white border-2 border-slate-200 rounded-2xl shadow-sm">
-                            <img src={qrCodeDataUrl} alt="PayU Dynamic UPI QR" className="w-48 h-48 mx-auto" />
-                          </div>
-                          <p className="text-xs text-slate-600 font-medium">
-                            Scan with GPay, PhonePe, Paytm, BHIM, or any UPI App to pay ₹{item.priceINR}
-                          </p>
-                          <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] font-mono text-emerald-800 flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                            <span>Auto-verifying payment every 3s...</span>
-                          </div>
 
-                          <button
-                            type="button"
-                            onClick={() => generatedTxnid && checkPaymentStatusOnce(generatedTxnid)}
-                            className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white font-mono text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all"
-                          >
-                            <Check className="w-4 h-4 text-emerald-400" /> I Have Completed Payment (Check Status)
-                          </button>
-                        </div>
-                      ) : (
                         <button
                           type="button"
-                          onClick={handleGenerateUpiIntentOrQr}
-                          className="w-full py-3 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                          onClick={() => generatedTxnid && checkPaymentStatusOnce(generatedTxnid)}
+                          className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white font-mono text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all"
                         >
-                          <QrCode className="w-4 h-4" /> Generate Dynamic QR Code
+                          <Check className="w-4 h-4 text-emerald-400" /> I Have Completed Payment (Check Status)
                         </button>
-                      )}
-                    </div>
-                  )}
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleGenerateUpiIntentOrQr}
+                        className="w-full py-3.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all"
+                      >
+                        <QrCode className="w-4 h-4" /> Show UPI QR Code & App Links (₹{item.priceINR})
+                      </button>
+                    )}
+                  </div>
 
-                  {/* 3. VPA Collect */}
-                  {upiMode === 'vpa' && (
-                    <div className="space-y-3">
-                      <p className="text-xs text-slate-600">
-                        Enter your UPI ID (VPA) to receive a collect payment request on your UPI app.
-                      </p>
+                  {/* VPA Collect Option Collapsible */}
+                  <div className="pt-2 border-t border-slate-200">
+                    <p className="text-[11px] font-mono text-slate-500 mb-1.5">
+                      Or request payment via your UPI ID (VPA):
+                    </p>
+                    <div className="flex gap-2">
                       <input
                         type="text"
-                        placeholder="e.g. username@oksbi / username@paytm"
+                        placeholder="e.g. yourname@okaxis"
                         value={vpa}
                         onChange={(e) => setVpa(e.target.value)}
-                        className="w-full bg-white border border-slate-300 rounded-xl py-2.5 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
+                        className="flex-1 bg-white border border-slate-300 rounded-xl py-2 px-3 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-teal-600"
                       />
                       <button
                         type="button"
                         onClick={handleCustomSubmit}
                         disabled={loading}
-                        className="w-full py-3 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase tracking-wider shadow-md transition-all cursor-pointer disabled:opacity-50"
+                        className="px-4 py-2 rounded-xl bg-teal-800 hover:bg-teal-900 text-white font-mono text-xs font-bold uppercase cursor-pointer disabled:opacity-50"
                       >
-                        {loading ? 'Sending Collect Request...' : `Send UPI Collect Request (₹${item.priceINR})`}
+                        {loading ? 'Sending...' : 'Request'}
                       </button>
                     </div>
-                  )}
-
+                  </div>
                 </div>
               )}
 
