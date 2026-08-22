@@ -405,6 +405,9 @@ app.post('/api/push/send', async (req, res) => {
 });
 
 
+// Active checkout cooldown map to prevent duplicate / rapid requests from hitting PayU within 8s
+const activeCheckoutLockMap = new Map<string, number>();
+
 // PayU Custom Checkout (Merchant Hosted) Endpoints
 app.get('/api/payu/config', (req, res) => {
   const isConfigured = Boolean(process.env.PAYU_MERCHANT_KEY && process.env.PAYU_MERCHANT_SALT);
@@ -453,7 +456,9 @@ app.post('/api/payu/hash', (req, res) => {
       hash, 
       key, 
       amount: formattedAmount,
-      payuUrl 
+      actionUrl: payuUrl,
+      txnid,
+      environment: payuEnv 
     });
   } catch (error: any) {
     console.error('PayU Hash Error:', error);
@@ -461,8 +466,8 @@ app.post('/api/payu/hash', (req, res) => {
   }
 });
 
-// PayU Custom Checkout (Merchant Hosted) Initiation Endpoint
-app.post('/api/payu/initiate-custom-checkout', (req, res) => {
+// PayU Official Hosted Checkout Session Initiation
+app.post('/api/payu/initiate-custom-checkout', async (req, res) => {
   try {
     const {
       amount,
@@ -502,6 +507,20 @@ app.post('/api/payu/initiate-custom-checkout', (req, res) => {
       ? (req.headers['x-forwarded-for'] as string).split(',')[0].trim()
       : (req.headers['x-real-ip'] || req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '127.0.0.1');
     const clientIp = String(rawIp).replace(/[^0-9a-fA-F:.]/g, '') || '127.0.0.1';
+
+    // Enforce 8-second cooldown per client IP + email to completely prevent PayU rate limiting (Step 3 checklist)
+    const userLockKey = `${clientIp}_${String(email).trim().toLowerCase()}`;
+    const lastRequestTime = activeCheckoutLockMap.get(userLockKey);
+    const now = Date.now();
+
+    if (lastRequestTime && (now - lastRequestTime < 8000)) {
+      console.warn(`[PayU Rate Limit Guard] Throttling rapid checkout attempt for ${userLockKey}. Cooldown active.`);
+      return res.status(429).json({ 
+        success: false, 
+        error: 'Payment initiation is already in progress. Please wait 8 seconds before trying again.' 
+      });
+    }
+    activeCheckoutLockMap.set(userLockKey, now);
 
     // PayU alphanumeric txnid without underscores to avoid rate-limit WAF triggers
     const randomSuffix = Math.floor(100000 + Math.random() * 900000).toString() + Math.random().toString(36).substring(2, 6).toUpperCase();
