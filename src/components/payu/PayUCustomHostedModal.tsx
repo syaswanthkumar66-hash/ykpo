@@ -139,12 +139,24 @@ export function PayUCustomHostedModal({
     setQrLoading(true);
 
     try {
+      let clientPublicIp = '';
+      try {
+        const ipRes = await fetch('https://api.ipify.org?format=json', { signal: AbortSignal.timeout(2000) });
+        if (ipRes.ok) {
+          const ipData = await ipRes.json();
+          clientPublicIp = ipData.ip || '';
+        }
+      } catch (ipErr) {
+        console.warn('Direct IP detection note:', ipErr);
+      }
+
       const payload = {
         amount: item.priceINR,
         productinfo: item.title,
         firstname: customerName.trim(),
         email: customerEmail.trim(),
         phone: customerPhone.replace(/\D/g, ''),
+        clientPublicIp,
         udf1: item.id,
         udf2: item.type || 'digital_product',
         udf3: customerPhone
@@ -155,6 +167,7 @@ export function PayUCustomHostedModal({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+
 
       const data = await res.json();
       if (!res.ok || !data.success) {
