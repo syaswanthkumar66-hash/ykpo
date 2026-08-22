@@ -231,6 +231,8 @@ router.post('/verify-payment', async (req, res) => {
     let transactionDetails: any = { txnid, status: 'pending' };
     let isVerified = false;
 
+    let rawPayUData: any = null;
+
     if (process.env.PAYU_MERCHANT_KEY && process.env.PAYU_MERCHANT_SALT) {
       try {
         const bodyParams = new URLSearchParams({
@@ -251,8 +253,10 @@ router.post('/verify-payment', async (req, res) => {
           let data: any = null;
           try {
             data = JSON.parse(rawText);
+            rawPayUData = data;
           } catch {
             console.warn('[PayU verify_payment raw response]:', rawText);
+            rawPayUData = rawText;
           }
 
           if (data && data.transaction_details) {
@@ -293,7 +297,8 @@ router.post('/verify-payment', async (req, res) => {
       reason: failureReason,
       bankRefNum: transactionDetails.bank_ref_num || transactionDetails.mihpayid || null,
       errorCode: transactionDetails.error || transactionDetails.error_code || null,
-      details: transactionDetails
+      details: transactionDetails,
+      rawPayUPostservice: rawPayUData
     });
   } catch (error: any) {
     console.error('[PayU Custom Verification Error]:', error);
