@@ -210,29 +210,42 @@ export function PayUCustomHostedModal({
 
   };
 
-  // Poll server for payment confirmation via verify_payment command
-  const startStatusPolling = (txnid: string) => {
-    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-    setQrPolling(true);
-
-    pollingIntervalRef.current = setInterval(async () => {
+    // Poll server for payment confirmation via verify_payment command
+    const checkPaymentStatusOnce = async (txnidToCheck: string) => {
       try {
         const res = await fetch('/api/payu/custom/verify-payment', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ txnid })
+          body: JSON.stringify({ txnid: txnidToCheck })
         });
         const verifyData = await res.json();
 
-        if (verifyData.verified || verifyData.status === 'success') {
+        const isSuccess = verifyData.verified || 
+          verifyData.status === 'success' || 
+          verifyData.status === 'captured' ||
+          verifyData.details?.status === 'success' ||
+          verifyData.details?.unmappedstatus === 'captured';
+
+        if (isSuccess) {
           if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
-          window.location.href = `/payment/success?txnid=${txnid}&amount=${item.priceINR}&product=${encodeURIComponent(item.title)}&customer=${encodeURIComponent(customerName)}&email=${encodeURIComponent(customerEmail)}&gateway=payu_custom&status=success`;
+          window.location.href = `/payment/success?txnid=${txnidToCheck}&amount=${item.priceINR}&product=${encodeURIComponent(item.title)}&customer=${encodeURIComponent(customerName)}&email=${encodeURIComponent(customerEmail)}&gateway=payu_custom&status=success`;
+          return true;
         }
+        return false;
       } catch (pollErr) {
         console.warn('Payment polling check:', pollErr);
+        return false;
       }
-    }, 4000);
-  };
+    };
+
+    const startStatusPolling = (txnid: string) => {
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+      setQrPolling(true);
+
+      pollingIntervalRef.current = setInterval(async () => {
+        await checkPaymentStatusOnce(txnid);
+      }, 3000);
+    };
 
   // Handle standard Custom Checkout submission (Cards, VPA, NetBanking, Wallets)
   const handleCustomSubmit = async (e: React.FormEvent) => {
@@ -625,8 +638,16 @@ export function PayUCustomHostedModal({
                           </p>
                           <div className="p-2 bg-emerald-50 border border-emerald-200 rounded-xl text-[11px] font-mono text-emerald-800 flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                            <span>Auto-verifying payment... Instant screen refresh</span>
+                            <span>Auto-verifying payment every 3s...</span>
                           </div>
+
+                          <button
+                            type="button"
+                            onClick={() => generatedTxnid && checkPaymentStatusOnce(generatedTxnid)}
+                            className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white font-mono text-xs font-bold flex items-center justify-center gap-2 cursor-pointer shadow-sm transition-all"
+                          >
+                            <Check className="w-4 h-4 text-emerald-400" /> I Have Completed Payment (Check Status)
+                          </button>
                         </div>
                       ) : (
                         <button
