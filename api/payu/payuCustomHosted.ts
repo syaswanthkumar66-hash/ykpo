@@ -381,15 +381,12 @@ router.post('/s2s-upi-intent', async (req, res) => {
     }
 
     if (!dynamicUpiUri) {
-      // Fallback to PayU standard dynamic UPI transaction URI formatted per NPCI spec with the active txnid
-      dynamicUpiUri = `upi://pay?pa=payu@axisbank&pn=${encodeURIComponent('PayU Payments')}&am=${formattedAmount}&cu=INR&tr=${txnid}&tn=${encodeURIComponent(`Order ${txnid}`)}`;
-      intentUris = {
-        standard: dynamicUpiUri,
-        gpay: `tez://upi/pay?pa=payu@axisbank&pn=${encodeURIComponent('PayU Payments')}&am=${formattedAmount}&cu=INR&tr=${txnid}&tn=${encodeURIComponent(`Order ${txnid}`)}`,
-        phonepe: `phonepe://pay?pa=payu@axisbank&pn=${encodeURIComponent('PayU Payments')}&am=${formattedAmount}&cu=INR&tr=${txnid}&tn=${encodeURIComponent(`Order ${txnid}`)}`,
-        paytm: `paytmmp://pay?pa=payu@axisbank&pn=${encodeURIComponent('PayU Payments')}&am=${formattedAmount}&cu=INR&tr=${txnid}&tn=${encodeURIComponent(`Order ${txnid}`)}`,
-        cred: `cred://upi/pay?pa=payu@axisbank&pn=${encodeURIComponent('PayU Payments')}&am=${formattedAmount}&cu=INR&tr=${txnid}&tn=${encodeURIComponent(`Order ${txnid}`)}`
-      };
+      // PayU S2S must return intentURIs for active merchant accounts
+      console.error('[PayU S2S Warning] Dynamic UPI URI was not returned by PayU. Server response:', payuServerResponse);
+      return res.status(502).json({
+        success: false,
+        error: 'PayU did not return a dynamic UPI Intent URI. Please ensure your PayU Merchant account has UPI Intent enabled in production, or pay via Card / NetBanking.'
+      });
     }
 
     res.json({
@@ -419,8 +416,9 @@ router.post('/s2s-upi-intent', async (req, res) => {
         udf2,
         udf3
       },
-      payuS2sActive: Boolean(payuServerResponse)
+      payuS2sActive: true
     });
+
   } catch (error: any) {
     console.error('[PayU Custom S2S UPI Intent Error]:', error);
     res.status(500).json({ success: false, error: 'Failed to generate Dynamic S2S UPI Intent & QR', details: error.message });
