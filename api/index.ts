@@ -497,18 +497,27 @@ app.post('/api/payu/initiate-custom-checkout', (req, res) => {
     const surl = `${originHost}/api/payu/success`;
     const furl = `${originHost}/api/payu/failure`;
 
+    // Extract actual customer's Client IP address to bypass Vercel serverless IP rate-limiting
+    const rawIp = req.headers['x-forwarded-for'] 
+      ? (req.headers['x-forwarded-for'] as string).split(',')[0].trim()
+      : (req.headers['x-real-ip'] || req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '127.0.0.1');
+    const clientIp = String(rawIp).replace(/[^0-9a-fA-F:.]/g, '') || '127.0.0.1';
+
     // PayU alphanumeric txnid without underscores to avoid rate-limit WAF triggers
-    const txnid = req.body.txnid || ('YK' + Date.now() + Math.floor(10000 + Math.random() * 90000));
+    const randomSuffix = Math.floor(100000 + Math.random() * 900000).toString() + Math.random().toString(36).substring(2, 6).toUpperCase();
+    const txnid = req.body.txnid || ('YK' + Date.now() + randomSuffix);
     const formattedAmount = Number(amount).toFixed(2);
     const sanitizedProduct = String(productinfo).replace(/[^a-zA-Z0-9\s-_.]/g, '').slice(0, 100);
     const sanitizedFirstname = String(firstname).replace(/[^a-zA-Z0-9\s]/g, '').trim().slice(0, 50);
     const customerPhone = phone ? String(phone).replace(/\D/g, '').slice(-10) : '8309080424';
 
+    console.log(`[PayU Audit Log] TS: ${new Date().toISOString()} | TXN: ${txnid} | Client IP: ${clientIp} | Customer: ${sanitizedFirstname} (${email}) | Amount: ${formattedAmount}`);
+
     // Hash formula: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
     const hashString = `${key}|${txnid}|${formattedAmount}|${sanitizedProduct}|${sanitizedFirstname}|${email}|${udf1}|${udf2}|${udf3}|${udf4}|${udf5}||||||${salt}`;
     const hash = crypto.createHash('sha512').update(hashString).digest('hex');
 
-    // Build the PayU Hosted / Custom parameters dictionary
+    // Build the PayU Hosted / Custom parameters dictionary with s2s_client_ip
     const payuParams: Record<string, string> = {
       key,
       txnid,
@@ -520,6 +529,7 @@ app.post('/api/payu/initiate-custom-checkout', (req, res) => {
       surl,
       furl,
       hash,
+      s2s_client_ip: clientIp,
       service_provider: 'payu_paisa',
       udf1,
       udf2,
