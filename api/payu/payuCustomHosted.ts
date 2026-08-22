@@ -333,80 +333,92 @@ router.post('/s2s-upi-intent', async (req, res) => {
     let intentUris: Record<string, string> = {};
     let payuServerResponse: any = null;
 
-    // Call official PayU S2S UPI Intent API (https://docs.payu.in/docs/upi-intent-server-to-server)
-    // Mandatory parameters for S2S UPI Intent: pg=UPI, bankcode=INTENT, txn_s2s_flow=4, s2s_client_ip, s2s_device_info
-    const postData = new URLSearchParams({
-      key,
-      txnid,
-      amount: formattedAmount,
-      productinfo: sanitizedProduct,
-      firstname: sanitizedFirstname,
-      email: customerEmail,
-      phone: customerPhone,
-      surl,
-      furl,
-      hash,
-      pg: 'UPI',
-      bankcode: 'INTENT',
-      txn_s2s_flow: '4',
-      s2s_client_ip: clientIp,
-      s2s_device_info: deviceInfo,
-      udf1,
-      udf2,
-      udf3
-    });
+    // Call official PayU Dynamic QR / S2S UPI Intent API
+    // Reference 1: https://docs.payu.in/reference/dynamic-qr-generation-api (pg=DBQR, bankcode=UPIDBQR, txn_s2s_flow=4)
+    // Reference 2: https://docs.payu.in/docs/upi-intent-server-to-server (pg=UPI, bankcode=INTENT, txn_s2s_flow=4)
+    const attempts = [
+      { pg: 'DBQR', bankcode: 'UPIDBQR', txn_s2s_flow: '4' },
+      { pg: 'UPI', bankcode: 'INTENT', txn_s2s_flow: '4' }
+    ];
 
-    const payuRes = await fetch(payuEndpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': 'application/json, text/plain, */*'
-      },
-      body: postData.toString()
-    });
+    for (const config of attempts) {
+      try {
+        const postData = new URLSearchParams({
+          key,
+          txnid,
+          amount: formattedAmount,
+          productinfo: sanitizedProduct,
+          firstname: sanitizedFirstname,
+          email: customerEmail,
+          phone: customerPhone,
+          surl,
+          furl,
+          hash,
+          pg: config.pg,
+          bankcode: config.bankcode,
+          txn_s2s_flow: config.txn_s2s_flow,
+          s2s_client_ip: clientIp,
+          s2s_device_info: deviceInfo,
+          udf1,
+          udf2,
+          udf3
+        });
 
-    if (payuRes.ok) {
-      const contentType = payuRes.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        payuServerResponse = await payuRes.json();
-      } else {
-        const rawText = await payuRes.text();
-        try {
-          payuServerResponse = JSON.parse(rawText);
-        } catch {
-          console.warn('[PayU Custom S2S Response text]:', rawText);
+        const payuRes = await fetch(payuEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json, text/plain, */*'
+          },
+          body: postData.toString()
+        });
+
+        if (payuRes.ok) {
+          const contentType = payuRes.headers.get('content-type') || '';
+          if (contentType.includes('application/json')) {
+            payuServerResponse = await payuRes.json();
+          } else {
+            const rawText = await payuRes.text();
+            try {
+              payuServerResponse = JSON.parse(rawText);
+            } catch {
+              console.warn(`[PayU ${config.pg} Response text]:`, rawText);
+            }
+          }
+
+          if (payuServerResponse) {
+            const returnedUris = payuServerResponse.intentURIs || 
+                                 payuServerResponse.intentURIData || 
+                                 payuServerResponse.data?.intentURIs || 
+                                 payuServerResponse.data?.intentURIData || 
+                                 payuServerResponse.result?.intentURIs ||
+                                 payuServerResponse.data;
+
+            if (returnedUris && typeof returnedUris === 'object') {
+              intentUris = returnedUris;
+              dynamicUpiUri = returnedUris.upiURI || returnedUris.upiUri || returnedUris.qrString || returnedUris.qrCode || returnedUris.standard || '';
+            } else if (payuServerResponse.upiURI || payuServerResponse.upiUri || payuServerResponse.qrString || payuServerResponse.qrCode) {
+              dynamicUpiUri = payuServerResponse.upiURI || payuServerResponse.upiUri || payuServerResponse.qrString || payuServerResponse.qrCode;
+              intentUris = { standard: dynamicUpiUri };
+            }
+
+            if (dynamicUpiUri) break; // Successfully obtained dynamic QR/Intent URI
+          }
         }
+      } catch (err) {
+        console.warn(`[PayU ${config.pg} Attempt Notice]:`, err);
       }
-
-      if (payuServerResponse) {
-        // PayU S2S returns intentURIData or intentURIs or data
-        const returnedUris = payuServerResponse.intentURIs || 
-                             payuServerResponse.intentURIData || 
-                             payuServerResponse.data?.intentURIs || 
-                             payuServerResponse.data?.intentURIData || 
-                             payuServerResponse.result?.intentURIs;
-
-        if (returnedUris) {
-          intentUris = returnedUris;
-          dynamicUpiUri = returnedUris.upiURI || returnedUris.upiUri || returnedUris.standard || '';
-        } else if (payuServerResponse.upiURI || payuServerResponse.upiUri) {
-          dynamicUpiUri = payuServerResponse.upiURI || payuServerResponse.upiUri;
-          intentUris = { standard: dynamicUpiUri };
-        }
-      }
-    } else {
-      const errorText = await payuRes.text();
-      console.error('[PayU S2S Error Response]:', payuRes.status, errorText);
     }
 
     if (!dynamicUpiUri) {
-      console.error('[PayU S2S Warning] Dynamic UPI Intent URI not returned. Server response:', payuServerResponse);
+      console.error('[PayU Dynamic QR/Intent Warning] Server response:', payuServerResponse);
       return res.status(502).json({
         success: false,
-        error: 'PayU S2S did not return a dynamic UPI Intent URI for this transaction. Please ensure UPI Intent S2S permissions are active on your PayU Key or pay via Card/NetBanking.',
+        error: 'PayU did not return a dynamic UPI QR / Intent URI. Please ensure DBQR or UPI Intent permissions are activated on your PayU Merchant account (https://docs.payu.in/reference/dynamic-qr-generation-api), or pay via Card/NetBanking.',
         details: payuServerResponse
       });
     }
+
 
 
     res.json({
