@@ -643,8 +643,11 @@ app.post('/api/payu/s2s-upi-intent', async (req, res) => {
       return res.status(400).json({ error: 'Valid customer phone number and email are required for transaction.' });
     }
 
-    // Hash formula: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
-    const hashString = `${key}|${txnid}|${formattedAmount}|${sanitizedProduct}|${sanitizedFirstname}|${customerEmail}|${udf1}|${udf2}|${udf3}|||||||${salt}`;
+    // Standard PayU SHA-512 Hash formula (10 UDF slots total):
+    // key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt
+    const udf4 = req.body.udf4 || '';
+    const udf5 = req.body.udf5 || '';
+    const hashString = `${key}|${txnid}|${formattedAmount}|${sanitizedProduct}|${sanitizedFirstname}|${customerEmail}|${udf1}|${udf2}|${udf3}|${udf4}|${udf5}||||||${salt}`;
     const hash = crypto.createHash('sha512').update(hashString).digest('hex');
 
     // PayU Official Payment Identifier & VPA fallback

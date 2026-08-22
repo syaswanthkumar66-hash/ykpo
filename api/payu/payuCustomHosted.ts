@@ -322,8 +322,8 @@ router.post('/s2s-upi-intent', async (req, res) => {
     const udf4 = req.body.udf4 || '';
     const udf5 = req.body.udf5 || '';
 
-    // Standard PayU SHA-512 Hash: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5|||||salt (10 UDF slots total)
-    const hashString = `${key}|${txnid}|${formattedAmount}|${sanitizedProduct}|${sanitizedFirstname}|${customerEmail}|${udf1}|${udf2}|${udf3}|${udf4}|${udf5}|||||${salt}`;
+    // Standard PayU SHA-512 Hash: key|txnid|amount|productinfo|firstname|email|udf1|udf2|udf3|udf4|udf5||||||salt (10 UDF slots total)
+    const hashString = `${key}|${txnid}|${formattedAmount}|${sanitizedProduct}|${sanitizedFirstname}|${customerEmail}|${udf1}|${udf2}|${udf3}|${udf4}|${udf5}||||||${salt}`;
     const hash = crypto.createHash('sha512').update(hashString).digest('hex');
 
     // Extract actual customer device's network public IP address
