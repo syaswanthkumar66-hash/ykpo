@@ -322,64 +322,74 @@ router.post('/s2s-upi-intent', async (req, res) => {
     const hashString = `${key}|${txnid}|${formattedAmount}|${sanitizedProduct}|${sanitizedFirstname}|${customerEmail}|${udf1}|${udf2}|${udf3}|||||||${salt}`;
     const hash = crypto.createHash('sha512').update(hashString).digest('hex');
 
-    const payuMerchantVpa = 'payu@axisbank';
-    const payuMerchantName = 'PayU Payments (YK Yash)';
-    let dynamicUpiUri = `upi://pay?pa=${encodeURIComponent(payuMerchantVpa)}&pn=${encodeURIComponent(payuMerchantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(`Order ${sanitizedProduct.slice(0, 20)} - ${txnid}`)}`;
-
-    let intentUris: Record<string, string> = {
-      standard: dynamicUpiUri,
-      gpay: `tez://upi/pay?pa=${encodeURIComponent(payuMerchantVpa)}&pn=${encodeURIComponent(payuMerchantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(`Order ${sanitizedProduct.slice(0, 20)} - ${txnid}`)}`,
-      phonepe: `phonepe://pay?pa=${encodeURIComponent(payuMerchantVpa)}&pn=${encodeURIComponent(payuMerchantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(`Order ${sanitizedProduct.slice(0, 20)} - ${txnid}`)}`,
-      paytm: `paytmmp://pay?pa=${encodeURIComponent(payuMerchantVpa)}&pn=${encodeURIComponent(payuMerchantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(`Order ${sanitizedProduct.slice(0, 20)} - ${txnid}`)}`,
-      bhim: dynamicUpiUri,
-      cred: `cred://upi/pay?pa=${encodeURIComponent(payuMerchantVpa)}&pn=${encodeURIComponent(payuMerchantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(`Order ${sanitizedProduct.slice(0, 20)} - ${txnid}`)}`,
-      amazonpay: `amazonpay://upi/pay?pa=${encodeURIComponent(payuMerchantVpa)}&pn=${encodeURIComponent(payuMerchantName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(`Order ${sanitizedProduct.slice(0, 20)} - ${txnid}`)}`
-    };
-
+    let dynamicUpiUri = '';
+    let intentUris: Record<string, string> = {};
     let payuServerResponse: any = null;
 
-    try {
-      const postData = new URLSearchParams({
-        key,
-        txnid,
-        amount: formattedAmount,
-        productinfo: sanitizedProduct,
-        firstname: sanitizedFirstname,
-        email: customerEmail,
-        phone: customerPhone,
-        surl,
-        furl,
-        hash,
-        pg: 'UPI',
-        bankcode: 'INTENT',
-        txn_s2s_flow: '1',
-        udf1,
-        udf2,
-        udf3
-      });
+    // Call official PayU S2S UPI Intent API to generate dynamic transaction VPA and URIs
+    const postData = new URLSearchParams({
+      key,
+      txnid,
+      amount: formattedAmount,
+      productinfo: sanitizedProduct,
+      firstname: sanitizedFirstname,
+      email: customerEmail,
+      phone: customerPhone,
+      surl,
+      furl,
+      hash,
+      pg: 'UPI',
+      bankcode: 'INTENT',
+      txn_s2s_flow: '1',
+      udf1,
+      udf2,
+      udf3
+    });
 
-      const payuRes = await fetch(payuEndpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-          'Accept': 'application/json, text/plain, */*'
-        },
-        body: postData.toString()
-      });
+    const payuRes = await fetch(payuEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json, text/plain, */*'
+      },
+      body: postData.toString()
+    });
 
-      if (payuRes.ok) {
-        const contentType = payuRes.headers.get('content-type') || '';
-        if (contentType.includes('application/json')) {
-          payuServerResponse = await payuRes.json();
-          if (payuServerResponse.intentURIs || payuServerResponse.data?.intentURIs) {
-            const returnedUris = payuServerResponse.intentURIs || payuServerResponse.data?.intentURIs;
-            intentUris = { ...intentUris, ...returnedUris };
-            if (returnedUris.upiURI) dynamicUpiUri = returnedUris.upiURI;
-          }
+    if (payuRes.ok) {
+      const contentType = payuRes.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        payuServerResponse = await payuRes.json();
+      } else {
+        const rawText = await payuRes.text();
+        try {
+          payuServerResponse = JSON.parse(rawText);
+        } catch {
+          console.warn('[PayU Custom S2S Response text]:', rawText);
         }
       }
-    } catch (payuErr) {
-      console.warn('[PayU Custom S2S Notice]:', payuErr);
+
+      if (payuServerResponse) {
+        const returnedUris = payuServerResponse.intentURIs || payuServerResponse.data?.intentURIs || payuServerResponse.result?.intentURIs;
+        if (returnedUris) {
+          intentUris = returnedUris;
+          dynamicUpiUri = returnedUris.upiURI || returnedUris.standard || '';
+        }
+      }
+    } else {
+      const errorText = await payuRes.text();
+      console.error('[PayU S2S Error Response]:', payuRes.status, errorText);
+    }
+
+    if (!dynamicUpiUri) {
+      // Fallback to PayU standard dynamic UPI transaction URI formatted per NPCI spec with the active txnid
+      dynamicUpiUri = `upi://pay?pa=payu@axisbank&pn=${encodeURIComponent('PayU Payments')}&am=${formattedAmount}&cu=INR&tr=${txnid}&tn=${encodeURIComponent(`Order ${txnid}`)}`;
+      intentUris = {
+        standard: dynamicUpiUri,
+        gpay: `tez://upi/pay?pa=payu@axisbank&pn=${encodeURIComponent('PayU Payments')}&am=${formattedAmount}&cu=INR&tr=${txnid}&tn=${encodeURIComponent(`Order ${txnid}`)}`,
+        phonepe: `phonepe://pay?pa=payu@axisbank&pn=${encodeURIComponent('PayU Payments')}&am=${formattedAmount}&cu=INR&tr=${txnid}&tn=${encodeURIComponent(`Order ${txnid}`)}`,
+        paytm: `paytmmp://pay?pa=payu@axisbank&pn=${encodeURIComponent('PayU Payments')}&am=${formattedAmount}&cu=INR&tr=${txnid}&tn=${encodeURIComponent(`Order ${txnid}`)}`,
+        cred: `cred://upi/pay?pa=payu@axisbank&pn=${encodeURIComponent('PayU Payments')}&am=${formattedAmount}&cu=INR&tr=${txnid}&tn=${encodeURIComponent(`Order ${txnid}`)}`
+      };
     }
 
     res.json({
@@ -387,8 +397,6 @@ router.post('/s2s-upi-intent', async (req, res) => {
       txnid,
       amount: formattedAmount,
       currency: 'INR',
-      merchantVpa: payuMerchantVpa,
-      merchantName: payuMerchantName,
       upiUri: dynamicUpiUri,
       intentUris,
       hash,
@@ -415,9 +423,10 @@ router.post('/s2s-upi-intent', async (req, res) => {
     });
   } catch (error: any) {
     console.error('[PayU Custom S2S UPI Intent Error]:', error);
-    res.status(500).json({ success: false, error: 'Failed to generate Custom S2S UPI Intent', details: error.message });
+    res.status(500).json({ success: false, error: 'Failed to generate Dynamic S2S UPI Intent & QR', details: error.message });
   }
 });
+
 
 /**
  * 6. PayU Custom Checkout Success Callback
