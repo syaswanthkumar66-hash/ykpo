@@ -446,12 +446,21 @@ router.post('/s2s-upi-intent', async (req, res) => {
 
     if (!dynamicUpiUri) {
       console.error('[PayU Dynamic QR/Intent Warning] Server response:', payuServerResponse);
+      const payuMsg = payuServerResponse?.metaData?.message || 
+                      payuServerResponse?.message || 
+                      payuServerResponse?.msg || 
+                      payuServerResponse?.error_Message ||
+                      (typeof payuServerResponse === 'string' ? payuServerResponse.slice(0, 300) : null);
+
       return res.status(502).json({
         success: false,
-        error: 'PayU did not return a dynamic UPI QR / Intent URI. Please ensure DBQR or UPI Intent permissions are activated on your PayU Merchant account (https://docs.payu.in/reference/dynamic-qr-generation-api), or pay via Card/NetBanking.',
-        details: payuServerResponse
+        error: payuMsg 
+          ? `PayU Response: ${payuMsg}` 
+          : 'PayU did not return dynamic UPI QR / Intent data for this transaction. Please ensure DBQR / UPI Intent feature is activated on your PayU account, or pay via UPI VPA / Cards / NetBanking.',
+        payuRawResponse: payuServerResponse
       });
     }
+
 
 
 
