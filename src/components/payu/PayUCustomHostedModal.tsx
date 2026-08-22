@@ -64,7 +64,7 @@ export function PayUCustomHostedModal({
   initialCustomerPhone = ''
 }: PayUCustomHostedModalProps) {
   const [activeTab, setActiveTab] = useState<PaymentTab>('upi');
-  const [upiMode, setUpiMode] = useState<UpiMode>('intent');
+  const [upiMode, setUpiMode] = useState<UpiMode>('vpa');
   
   // Customer basic info
   const [customerName, setCustomerName] = useState(initialCustomerName);
@@ -490,12 +490,12 @@ export function PayUCustomHostedModal({
                   <div className="flex items-center justify-center gap-1 p-1 bg-white rounded-xl border border-slate-200 text-xs font-mono">
                     <button
                       type="button"
-                      onClick={() => setUpiMode('intent')}
+                      onClick={() => setUpiMode('vpa')}
                       className={`flex-1 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                        upiMode === 'intent' ? 'bg-teal-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        upiMode === 'vpa' ? 'bg-teal-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      <Zap className="w-3 h-3" /> UPI Apps Intent
+                      <Smartphone className="w-3 h-3" /> UPI VPA Collect
                     </button>
                     <button
                       type="button"
@@ -511,14 +511,15 @@ export function PayUCustomHostedModal({
                     </button>
                     <button
                       type="button"
-                      onClick={() => setUpiMode('vpa')}
+                      onClick={() => setUpiMode('intent')}
                       className={`flex-1 py-1.5 rounded-lg font-semibold transition-all cursor-pointer flex items-center justify-center gap-1 ${
-                        upiMode === 'vpa' ? 'bg-teal-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                        upiMode === 'intent' ? 'bg-teal-700 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
                       }`}
                     >
-                      <span>UPI VPA Collect</span>
+                      <Zap className="w-3 h-3" /> UPI Apps Intent
                     </button>
                   </div>
+
 
                   {/* 1. UPI Intent Apps */}
                   {upiMode === 'intent' && (
