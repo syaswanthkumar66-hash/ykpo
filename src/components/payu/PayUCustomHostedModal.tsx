@@ -100,6 +100,7 @@ export function PayUCustomHostedModal({
   const [rawServerResponse, setRawServerResponse] = useState<any>(null);
   const [latestVerifyData, setLatestVerifyData] = useState<any>(null);
   const [verifyCount, setVerifyCount] = useState(0);
+  const [manualChecking, setManualChecking] = useState(false);
 
   const pollingIntervalRef = useRef<any>(null);
 
@@ -213,8 +214,6 @@ export function PayUCustomHostedModal({
   };
 
     // Poll server for payment confirmation via verify_payment command
-    const [manualChecking, setManualChecking] = useState(false);
-
     const checkPaymentStatusOnce = async (txnidToCheck: string, isManualClick = false) => {
       if (isManualClick) setManualChecking(true);
       try {
