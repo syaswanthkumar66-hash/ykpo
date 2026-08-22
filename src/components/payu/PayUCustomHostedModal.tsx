@@ -226,15 +226,25 @@ export function PayUCustomHostedModal({
         setLatestVerifyData(verifyData);
         setVerifyCount(c => c + 1);
 
-        const isSuccess = verifyData.verified || 
-          verifyData.status === 'success' || 
-          verifyData.status === 'captured' ||
-          verifyData.details?.status === 'success' ||
-          verifyData.details?.unmappedstatus === 'captured' ||
-          Boolean(verifyData.bankRefNum && verifyData.details?.status !== 'failed');
+        const statusStr = String(verifyData.status || '').toLowerCase();
+        const unmappedStr = String(verifyData.details?.unmappedstatus || '').toLowerCase();
+        const msgStr = String(verifyData.details?.error_Message || verifyData.details?.msg || '').toLowerCase();
 
-        if (isSuccess || (isManualClick && verifyData.status !== 'failed')) {
-          if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
+        const isSuccess = 
+          verifyData.verified === true || 
+          statusStr === 'success' || 
+          statusStr === 'captured' ||
+          unmappedStr === 'captured' ||
+          unmappedStr === 'success' ||
+          msgStr.includes('success') ||
+          msgStr.includes('completed') ||
+          Boolean(verifyData.bankRefNum && statusStr !== 'failed');
+
+        if (isSuccess || (isManualClick && statusStr !== 'failed')) {
+          if (pollingIntervalRef.current) {
+            clearInterval(pollingIntervalRef.current);
+            pollingIntervalRef.current = null;
+          }
           window.location.href = `/payment/success?txnid=${txnidToCheck}&amount=${item.priceINR}&product=${encodeURIComponent(item.title)}&customer=${encodeURIComponent(customerName)}&email=${encodeURIComponent(customerEmail)}&gateway=payu_custom&status=success`;
           return true;
         }
@@ -255,9 +265,13 @@ export function PayUCustomHostedModal({
       if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current);
       setQrPolling(true);
 
-      pollingIntervalRef.current = setInterval(async () => {
-        await checkPaymentStatusOnce(txnid, false);
-      }, 3000);
+      // Immediately run an initial check
+      checkPaymentStatusOnce(txnid, false);
+
+      // Poll every 2.5 seconds for instant detection
+      pollingIntervalRef.current = setInterval(() => {
+        checkPaymentStatusOnce(txnid, false);
+      }, 2500);
     };
 
   // Handle standard Custom Checkout submission (Cards, VPA, NetBanking, Wallets)
