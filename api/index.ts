@@ -835,12 +835,33 @@ app.post('/api/payu/verify-payment', async (req, res) => {
         });
 
         if (verifyRes.ok) {
-          const data: any = await verifyRes.json();
-          if (data && data.transaction_details && data.transaction_details[txnid]) {
-            transactionDetails = data.transaction_details[txnid];
-            paymentStatus = transactionDetails.status || 'pending';
-            if (paymentStatus === 'success' || transactionDetails.unmappedstatus === 'captured') {
-              isVerified = true;
+          const rawText = await verifyRes.text();
+          let data: any = null;
+          try {
+            data = JSON.parse(rawText);
+          } catch {
+            console.warn('[PayU verify_payment raw response]:', rawText);
+          }
+
+          if (data && data.transaction_details) {
+            const matchedKey = Object.keys(data.transaction_details).find(
+              k => k.toLowerCase() === String(txnid).toLowerCase()
+            );
+            
+            if (matchedKey) {
+              transactionDetails = data.transaction_details[matchedKey];
+              paymentStatus = transactionDetails.status || 'pending';
+              const unmapped = String(transactionDetails.unmappedstatus || '').toLowerCase();
+              
+              if (
+                paymentStatus.toLowerCase() === 'success' || 
+                unmapped === 'captured' || 
+                unmapped === 'success' ||
+                Boolean(transactionDetails.mihpayid && transactionDetails.bank_ref_num)
+              ) {
+                isVerified = true;
+                paymentStatus = 'success';
+              }
             }
           }
         }
