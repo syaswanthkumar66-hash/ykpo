@@ -322,11 +322,19 @@ router.post('/s2s-upi-intent', async (req, res) => {
     const hashString = `${key}|${txnid}|${formattedAmount}|${sanitizedProduct}|${sanitizedFirstname}|${customerEmail}|${udf1}|${udf2}|${udf3}|||||||${salt}`;
     const hash = crypto.createHash('sha512').update(hashString).digest('hex');
 
+    // Extract actual customer's IP address and User-Agent device info per PayU S2S spec
+    const rawIp = req.headers['x-forwarded-for'] 
+      ? (req.headers['x-forwarded-for'] as string).split(',')[0].trim()
+      : (req.headers['x-real-ip'] || req.headers['cf-connecting-ip'] || req.socket.remoteAddress || '127.0.0.1');
+    const clientIp = String(rawIp).replace(/[^0-9a-fA-F:.]/g, '') || '127.0.0.1';
+    const deviceInfo = (req.headers['user-agent'] as string) || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0';
+
     let dynamicUpiUri = '';
     let intentUris: Record<string, string> = {};
     let payuServerResponse: any = null;
 
-    // Call official PayU S2S UPI Intent API to generate dynamic transaction VPA and URIs
+    // Call official PayU S2S UPI Intent API (https://docs.payu.in/docs/upi-intent-server-to-server)
+    // Mandatory parameters for S2S UPI Intent: pg=UPI, bankcode=INTENT, txn_s2s_flow=4, s2s_client_ip, s2s_device_info
     const postData = new URLSearchParams({
       key,
       txnid,
@@ -340,7 +348,9 @@ router.post('/s2s-upi-intent', async (req, res) => {
       hash,
       pg: 'UPI',
       bankcode: 'INTENT',
-      txn_s2s_flow: '1',
+      txn_s2s_flow: '4',
+      s2s_client_ip: clientIp,
+      s2s_device_info: deviceInfo,
       udf1,
       udf2,
       udf3
@@ -369,10 +379,19 @@ router.post('/s2s-upi-intent', async (req, res) => {
       }
 
       if (payuServerResponse) {
-        const returnedUris = payuServerResponse.intentURIs || payuServerResponse.data?.intentURIs || payuServerResponse.result?.intentURIs;
+        // PayU S2S returns intentURIData or intentURIs or data
+        const returnedUris = payuServerResponse.intentURIs || 
+                             payuServerResponse.intentURIData || 
+                             payuServerResponse.data?.intentURIs || 
+                             payuServerResponse.data?.intentURIData || 
+                             payuServerResponse.result?.intentURIs;
+
         if (returnedUris) {
           intentUris = returnedUris;
-          dynamicUpiUri = returnedUris.upiURI || returnedUris.standard || '';
+          dynamicUpiUri = returnedUris.upiURI || returnedUris.upiUri || returnedUris.standard || '';
+        } else if (payuServerResponse.upiURI || payuServerResponse.upiUri) {
+          dynamicUpiUri = payuServerResponse.upiURI || payuServerResponse.upiUri;
+          intentUris = { standard: dynamicUpiUri };
         }
       }
     } else {
@@ -381,13 +400,14 @@ router.post('/s2s-upi-intent', async (req, res) => {
     }
 
     if (!dynamicUpiUri) {
-      // PayU S2S must return intentURIs for active merchant accounts
-      console.error('[PayU S2S Warning] Dynamic UPI URI was not returned by PayU. Server response:', payuServerResponse);
+      console.error('[PayU S2S Warning] Dynamic UPI Intent URI not returned. Server response:', payuServerResponse);
       return res.status(502).json({
         success: false,
-        error: 'PayU did not return a dynamic UPI Intent URI. Please ensure your PayU Merchant account has UPI Intent enabled in production, or pay via Card / NetBanking.'
+        error: 'PayU S2S did not return a dynamic UPI Intent URI for this transaction. Please ensure UPI Intent S2S permissions are active on your PayU Key or pay via Card/NetBanking.',
+        details: payuServerResponse
       });
     }
+
 
     res.json({
       success: true,
