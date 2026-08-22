@@ -387,22 +387,42 @@ router.post('/s2s-upi-intent', async (req, res) => {
           }
 
           if (payuServerResponse) {
-            const returnedUris = payuServerResponse.intentURIs || 
-                                 payuServerResponse.intentURIData || 
-                                 payuServerResponse.data?.intentURIs || 
-                                 payuServerResponse.data?.intentURIData || 
-                                 payuServerResponse.result?.intentURIs ||
-                                 payuServerResponse.data;
+            let rawIntentData = payuServerResponse.intentURIData || 
+                                payuServerResponse.intentURIs || 
+                                payuServerResponse.data?.intentURIData || 
+                                payuServerResponse.data?.intentURIs || 
+                                payuServerResponse.result?.intentURIData ||
+                                payuServerResponse.result?.intentURIs ||
+                                payuServerResponse.upiURI ||
+                                payuServerResponse.qrString ||
+                                payuServerResponse.qrCode ||
+                                payuServerResponse.data;
 
-            if (returnedUris && typeof returnedUris === 'object') {
-              intentUris = returnedUris;
-              dynamicUpiUri = returnedUris.upiURI || returnedUris.upiUri || returnedUris.qrString || returnedUris.qrCode || returnedUris.standard || '';
-            } else if (payuServerResponse.upiURI || payuServerResponse.upiUri || payuServerResponse.qrString || payuServerResponse.qrCode) {
-              dynamicUpiUri = payuServerResponse.upiURI || payuServerResponse.upiUri || payuServerResponse.qrString || payuServerResponse.qrCode;
-              intentUris = { standard: dynamicUpiUri };
+            if (typeof rawIntentData === 'string') {
+              // As stated in PayU docs: prepend upi://pay? to intentURIData if not already prefixed
+              let cleanUri = rawIntentData.trim();
+              if (!cleanUri.startsWith('upi://') && !cleanUri.startsWith('tez://') && !cleanUri.startsWith('phonepe://')) {
+                cleanUri = `upi://pay?${cleanUri.replace(/^\?/, '')}`;
+              }
+              dynamicUpiUri = cleanUri;
+              const queryString = cleanUri.includes('?') ? cleanUri.split('?')[1] : '';
+              intentUris = {
+                standard: cleanUri,
+                gpay: `tez://upi/pay?${queryString}`,
+                phonepe: `phonepe://pay?${queryString}`,
+                paytm: `paytmmp://pay?${queryString}`,
+                cred: `cred://upi/pay?${queryString}`
+              };
+            } else if (rawIntentData && typeof rawIntentData === 'object') {
+              intentUris = rawIntentData;
+              let directUri = rawIntentData.upiURI || rawIntentData.upiUri || rawIntentData.standard || rawIntentData.qrString || rawIntentData.qrCode || '';
+              if (directUri && !directUri.startsWith('upi://')) {
+                directUri = `upi://pay?${directUri.replace(/^\?/, '')}`;
+              }
+              dynamicUpiUri = directUri;
             }
 
-            if (dynamicUpiUri) break; // Successfully obtained dynamic QR/Intent URI
+            if (dynamicUpiUri) break; // Successfully resolved dynamic UPI URI
           }
         }
       } catch (err) {
@@ -418,6 +438,7 @@ router.post('/s2s-upi-intent', async (req, res) => {
         details: payuServerResponse
       });
     }
+
 
 
 
