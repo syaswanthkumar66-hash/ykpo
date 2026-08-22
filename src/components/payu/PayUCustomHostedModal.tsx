@@ -211,6 +211,9 @@ export function PayUCustomHostedModal({
   };
 
     // Poll server for payment confirmation via verify_payment command
+    const [latestVerifyData, setLatestVerifyData] = useState<any>(null);
+    const [verifyCount, setVerifyCount] = useState(0);
+
     const checkPaymentStatusOnce = async (txnidToCheck: string) => {
       try {
         const res = await fetch('/api/payu/custom/verify-payment', {
@@ -219,6 +222,8 @@ export function PayUCustomHostedModal({
           body: JSON.stringify({ txnid: txnidToCheck })
         });
         const verifyData = await res.json();
+        setLatestVerifyData(verifyData);
+        setVerifyCount(c => c + 1);
 
         const isSuccess = verifyData.verified || 
           verifyData.status === 'success' || 
@@ -804,7 +809,10 @@ export function PayUCustomHostedModal({
           )}
 
           {/* Isolated Server Response Debug Section (Easy to toggle / remove) */}
-          <PayUDebugResponse rawResponse={rawServerResponse} error={error} />
+          <PayUDebugResponse 
+            rawResponse={latestVerifyData ? { _verifyPollCount: verifyCount, verifyStatus: latestVerifyData, s2sInitiationResponse: rawServerResponse } : rawServerResponse} 
+            error={error} 
+          />
 
         </div>
 
