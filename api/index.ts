@@ -844,7 +844,7 @@ app.all('/api/payu/success', (req, res) => {
       }
       const calculatedHash = crypto.createHash('sha512').update(calculatedHashString).digest('hex');
       if (calculatedHash.toLowerCase() !== String(hash).toLowerCase()) {
-        console.warn('PayU Reverse Hash Verification Notice: Hash check difference (test/sandbox or mock mode).');
+        console.warn('PayU Reverse Hash Verification Notice: Hash check mismatch in callback payload.');
       }
     }
 
