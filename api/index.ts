@@ -503,23 +503,48 @@ app.post('/api/push/save-subscription', async (req, res) => {
 
   try {
     if (supabaseServer) {
-      const { data, error } = await supabaseServer.from('push_subscriptions').upsert([{
-        endpoint,
-        subscription: typeof subscription === 'string' ? JSON.parse(subscription) : subscription,
-        email: email || 'contact@ykyash.in',
-        user_agent: userAgent || req.headers['user-agent'] || 'Browser Client',
-        updated_at: new Date().toISOString()
-      }], { onConflict: 'endpoint' });
+      const subJson = typeof subscription === 'string' ? JSON.parse(subscription) : subscription;
+      
+      // Check existing
+      const { data: existing } = await supabaseServer
+        .from('push_subscriptions')
+        .select('id')
+        .eq('endpoint', endpoint)
+        .maybeSingle();
 
-      if (error) {
-        console.error('[Supabase Push Subscription Error]:', error);
-        return res.status(500).json({ error: error.message });
+      if (existing) {
+        const { error: updErr } = await supabaseServer
+          .from('push_subscriptions')
+          .update({
+            subscription: subJson,
+            email: email || 'contact@ykyash.in',
+            user_agent: userAgent || req.headers['user-agent'] || 'Browser Client'
+          })
+          .eq('endpoint', endpoint);
+        if (updErr) {
+          console.error('[Supabase Push Update Error]:', updErr);
+          return res.status(500).json({ error: updErr.message });
+        }
+      } else {
+        const { error: insErr } = await supabaseServer
+          .from('push_subscriptions')
+          .insert([{
+            endpoint,
+            subscription: subJson,
+            email: email || 'contact@ykyash.in',
+            user_agent: userAgent || req.headers['user-agent'] || 'Browser Client',
+            created_at: new Date().toISOString()
+          }]);
+        if (insErr) {
+          console.error('[Supabase Push Insert Error]:', insErr);
+          return res.status(500).json({ error: insErr.message });
+        }
       }
     }
-    res.json({ success: true, message: 'Subscription saved successfully' });
+    return res.json({ success: true, message: 'Subscription saved successfully' });
   } catch (err: any) {
     console.error('Save subscription error:', err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 });
 
