@@ -1148,53 +1148,34 @@ app.post('/api/admin/payu-auth/request-otp', async (req, res) => {
 
     // Generate secure 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const senderAddress = process.env.RESEND_FROM_EMAIL || 'YK Yash Security <auth@verify.ykyash.in>';
-    const emailSubject = 'PayU Dashboard Access Passkey';
+    const senderAddress = process.env.RESEND_FROM_EMAIL || 'YK Yash <auth@verify.ykyash.in>';
+    const emailSubject = 'Your Verification Code';
 
     const emailHtml = `<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PayU Dashboard Passkey</title>
+  <title>Verification Code</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f6f8;">
-    <tr>
-      <td align="center" style="padding: 40px 16px;">
-        <table role="presentation" width="100%" style="max-width: 520px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.04);" cellspacing="0" cellpadding="0" border="0">
-          <tr>
-            <td style="background-color: #12181A; padding: 24px 32px; text-align: left;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;">YK Yash • Security Gate</h1>
-              <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">PAYU SETTLEMENT AUDIT</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 32px;">
-              <h2 style="color: #0f172a; font-size: 18px; margin: 0 0 12px 0; font-weight: 600;">Administrator Verification Required</h2>
-              <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
-                A request was made to unlock the <strong>PayU Live Transaction Ledger & Financial Analytics</strong>. Use the single-use verification passkey below to complete authentication:
-              </p>
-              
-              <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; margin: 0 0 24px 0;">
-                <span style="font-size: 36px; font-weight: 800; color: #0f172a; letter-spacing: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; display: block; margin-left: 10px;">${otp}</span>
-                <span style="display: block; font-size: 11px; color: #64748b; font-family: monospace; margin-top: 8px;">VALID FOR 5 MINUTES ONLY</span>
-              </div>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background-color: #ffffff;">
+  <div style="max-width: 480px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; padding: 28px;">
+    <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0;">YK Yash</h2>
+    <p style="font-size: 15px; line-height: 1.5; color: #334155; margin: 0 0 20px 0;">
+      Here is your single-use verification code to access your control panel:
+    </p>
+    
+    <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; text-align: center; margin: 0 0 20px 0;">
+      <span style="font-size: 32px; font-weight: 700; color: #0f172a; letter-spacing: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${otp}</span>
+    </div>
 
-              <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0 0 20px 0;">
-                If you did not request access to the PayU transaction logs, no action is needed and you may safely disregard this message.
-              </p>
+    <p style="font-size: 13px; color: #64748b; margin: 0 0 16px 0; line-height: 1.4;">
+      This code is valid for 5 minutes. If you did not request this, you can safely ignore this email.
+    </p>
 
-              <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; font-family: monospace;">
-                <span>Security Token: ${crypto.randomBytes(6).toString('hex').toUpperCase()} | Protected by 256-bit encryption</span><br>
-                <a href="mailto:support@ykyash.in?subject=unsubscribe" style="color: #94a3b8; text-decoration: underline;">Unsubscribe / Inquiries</a>
-              </div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+    <div style="border-top: 1px solid #f1f5f9; padding-top: 14px; font-size: 12px; color: #94a3b8;">
+      YK Yash • <a href="https://ykyash.in" style="color: #64748b; text-decoration: underline;">ykyash.in</a>
+    </div>
+  </div>
 </body>
 </html>`;
 
@@ -1278,53 +1259,35 @@ app.post('/api/admin/payu-auth/test-email', async (req, res) => {
     }
 
     const testOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    const senderAddress = process.env.RESEND_FROM_EMAIL || 'YK Yash Security <auth@verify.ykyash.in>';
-    const emailSubject = 'PayU Dashboard Access Passkey (Deliverability Test)';
+    const senderAddress = process.env.RESEND_FROM_EMAIL || 'YK Yash <auth@verify.ykyash.in>';
+    const emailSubject = 'Test Message from ykyash.in';
 
     const emailHtml = `<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PayU Dashboard Passkey</title>
+  <title>Test Message</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f6f8;">
-    <tr>
-      <td align="center" style="padding: 40px 16px;">
-        <table role="presentation" width="100%" style="max-width: 520px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.04);" cellspacing="0" cellpadding="0" border="0">
-          <tr>
-            <td style="background-color: #12181A; padding: 24px 32px; text-align: left;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;">YK Yash • Security Gate</h1>
-              <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">DELIVERABILITY & SPAM SCORE AUDIT</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 32px;">
-              <h2 style="color: #0f172a; font-size: 18px; margin: 0 0 12px 0; font-weight: 600;">Security Test Verification Passkey</h2>
-              <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
-                This is a live test message dispatched to test inbox placement, deliverability score, and DKIM/SPF alignment:
-              </p>
-              
-              <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; margin: 0 0 24px 0;">
-                <span style="font-size: 36px; font-weight: 800; color: #0f172a; letter-spacing: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; display: block; margin-left: 10px;">${testOtp}</span>
-                <span style="display: block; font-size: 11px; color: #64748b; font-family: monospace; margin-top: 8px;">SAMPLE OTP PASSKEY</span>
-              </div>
+<body style="margin: 0; padding: 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; background-color: #ffffff;">
+  <div style="max-width: 480px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; padding: 28px;">
+    <h2 style="font-size: 20px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0;">YK Yash</h2>
+    <p style="font-size: 15px; line-height: 1.5; color: #334155; margin: 0 0 20px 0;">
+      This is a test email sent from your website (<a href="https://ykyash.in" style="color: #39AEA9; text-decoration: none;">ykyash.in</a>) to verify inbox delivery.
+    </p>
+    
+    <div style="background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 18px; text-align: center; margin: 0 0 20px 0;">
+      <span style="font-size: 28px; font-weight: 700; color: #0f172a; letter-spacing: 6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">${testOtp}</span>
+      <span style="display: block; font-size: 12px; color: #64748b; margin-top: 6px;">Sample Code</span>
+    </div>
 
-              <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0 0 20px 0;">
-                Certified high-reputation delivery route via Resend infrastructure with automated SPF/DKIM validation.
-              </p>
+    <p style="font-size: 13px; color: #64748b; margin: 0 0 16px 0; line-height: 1.4;">
+      Sent directly from your web server using clean email markup.
+    </p>
 
-              <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; font-family: monospace;">
-                <span>Security Token: ${crypto.randomBytes(6).toString('hex').toUpperCase()} | 256-Bit SSL Protection</span><br>
-                <a href="mailto:support@ykyash.in?subject=unsubscribe" style="color: #94a3b8; text-decoration: underline;">Unsubscribe / Inquiries</a>
-              </div>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
+    <div style="border-top: 1px solid #f1f5f9; padding-top: 14px; font-size: 12px; color: #94a3b8;">
+      YK Yash • <a href="https://ykyash.in" style="color: #64748b; text-decoration: underline;">ykyash.in</a>
+    </div>
+  </div>
 </body>
 </html>`;
 
