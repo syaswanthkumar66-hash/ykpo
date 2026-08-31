@@ -212,8 +212,9 @@ app.post('/api/auth/send-code', async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   try {
+    const senderEmail = process.env.RESEND_FROM_EMAIL || 'YK Yash <auth@verify.ykyash.in>';
     const { data, error } = await resend.emails.send({
-      from: 'YK Yash <auth@verify.ykyash.in>',
+      from: senderEmail,
       to: email,
       subject: 'Your YK Login Code',
       html: `
@@ -1127,7 +1128,7 @@ app.post('/api/admin/payu-auth/request-otp', async (req, res) => {
 
     // Generate secure 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const senderAddress = 'YK Yash Security <auth@verify.ykyash.in>';
+    const senderAddress = process.env.RESEND_FROM_EMAIL || 'YK Yash Security <auth@verify.ykyash.in>';
     const emailSubject = 'PayU Dashboard Access Passkey';
 
     const emailHtml = `<!DOCTYPE html>
@@ -1245,7 +1246,7 @@ app.post('/api/admin/payu-auth/test-email', async (req, res) => {
     }
 
     const testOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    const senderAddress = 'YK Yash Security <auth@verify.ykyash.in>';
+    const senderAddress = process.env.RESEND_FROM_EMAIL || 'YK Yash Security <auth@verify.ykyash.in>';
     const emailSubject = 'PayU Dashboard Access Passkey (Deliverability Test)';
 
     const emailHtml = `<!DOCTYPE html>

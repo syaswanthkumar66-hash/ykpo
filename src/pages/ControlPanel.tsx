@@ -346,28 +346,31 @@ export default function ControlPanel() {
   };
 
   return (
-    <div className="min-h-screen bg-sage text-white font-sans">
+    <div className="min-h-screen bg-[#F8FAFB] text-[#12181A] font-sans relative">
+      {/* Dynamic Background Glows */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-gradient-to-br from-[#39AEA9]/10 via-[#A2D5AB]/15 to-transparent rounded-full blur-3xl -z-10 pointer-events-none" />
+
       {/* Header */}
-      <header className="bg-sage/95 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
+      <header className="bg-white/80 backdrop-blur-md border-b border-[#557B83]/15 sticky top-0 z-50 shadow-xs">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link to="/" className="p-2 hover:bg-white/10 rounded-full transition-colors text-white">
+            <Link to="/" className="p-2 hover:bg-[#557B83]/10 rounded-full transition-colors text-[#12181A]">
               <ArrowLeft className="w-5 h-5" />
             </Link>
-            <h1 className="text-xl font-bold font-display text-white flex items-center gap-2">
+            <h1 className="text-xl font-bold font-display text-[#12181A] flex items-center gap-2">
               <ShieldCheck className="w-5 h-5 text-[#39AEA9]" />
               Merchant Control Panel
             </h1>
           </div>
           <div className="flex items-center gap-3">
-            <div className="text-xs font-mono font-medium text-white/70 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="text-xs font-mono font-medium text-[#557B83] bg-white px-3 py-1.5 rounded-full border border-[#557B83]/20 shadow-xs flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Supabase Live
             </div>
             {otpStep === 'unlocked' && (
               <button
                 onClick={handleLogoutAdmin}
-                className="text-xs text-red-400 hover:text-red-300 bg-red-500/10 border border-red-500/20 px-3 py-1.5 rounded-full transition-colors"
+                className="text-xs text-red-600 hover:text-red-700 bg-red-50 border border-red-200 px-3 py-1.5 rounded-full transition-colors font-medium cursor-pointer"
               >
                 Lock PayU Gate
               </button>
@@ -378,41 +381,49 @@ export default function ControlPanel() {
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         {/* Navigation Tabs */}
-        <div className="flex flex-wrap gap-3 mb-6">
+        <div className="flex flex-wrap gap-2.5 mb-8">
           <button
             onClick={() => setActiveTab('payments')}
-            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'payments' ? 'bg-olive text-pistachio shadow-lg border border-pistachio/30' : 'bg-white/5 text-white/70 hover:bg-white/10'
+            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer text-xs font-mono uppercase tracking-wider ${
+              activeTab === 'payments' 
+                ? 'bg-[#12181A] text-white shadow-md' 
+                : 'bg-white text-[#557B83] hover:text-[#12181A] hover:bg-white/90 border border-[#557B83]/15 shadow-xs'
             }`}
           >
-            <CreditCard className="w-4 h-4" />
+            <CreditCard className="w-4 h-4 text-[#39AEA9]" />
             PayU Transactions & Analytics
           </button>
           <button
             onClick={() => setActiveTab('messages')}
-            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'messages' ? 'bg-olive text-pistachio shadow-lg border border-pistachio/30' : 'bg-white/5 text-white/70 hover:bg-white/10'
+            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer text-xs font-mono uppercase tracking-wider ${
+              activeTab === 'messages' 
+                ? 'bg-[#12181A] text-white shadow-md' 
+                : 'bg-white text-[#557B83] hover:text-[#12181A] hover:bg-white/90 border border-[#557B83]/15 shadow-xs'
             }`}
           >
-            <MessageSquare className="w-4 h-4" />
+            <MessageSquare className="w-4 h-4 text-[#39AEA9]" />
             Contact Messages
           </button>
           <button
             onClick={() => setActiveTab('visitors')}
-            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'visitors' ? 'bg-olive text-pistachio shadow-lg border border-pistachio/30' : 'bg-white/5 text-white/70 hover:bg-white/10'
+            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer text-xs font-mono uppercase tracking-wider ${
+              activeTab === 'visitors' 
+                ? 'bg-[#12181A] text-white shadow-md' 
+                : 'bg-white text-[#557B83] hover:text-[#12181A] hover:bg-white/90 border border-[#557B83]/15 shadow-xs'
             }`}
           >
-            <Activity className="w-4 h-4" />
+            <Activity className="w-4 h-4 text-[#39AEA9]" />
             Website Visitors
           </button>
           <button
             onClick={() => setActiveTab('push')}
-            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer ${
-              activeTab === 'push' ? 'bg-olive text-pistachio shadow-lg border border-pistachio/30' : 'bg-white/5 text-white/70 hover:bg-white/10'
+            className={`px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 transition-all cursor-pointer text-xs font-mono uppercase tracking-wider ${
+              activeTab === 'push' 
+                ? 'bg-[#12181A] text-white shadow-md' 
+                : 'bg-white text-[#557B83] hover:text-[#12181A] hover:bg-white/90 border border-[#557B83]/15 shadow-xs'
             }`}
           >
-            <Bell className="w-4 h-4" />
+            <Bell className="w-4 h-4 text-[#39AEA9]" />
             Push Notifications
           </button>
         </div>
@@ -422,35 +433,35 @@ export default function ControlPanel() {
           <div>
             {otpStep !== 'unlocked' ? (
               /* Security Gate Modal / Card */
-              <div className="max-w-md mx-auto bg-white/5 border border-white/10 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-2xl space-y-6 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#1D5C58] to-[#39AEA9] p-[1px] mx-auto flex items-center justify-center shadow-lg">
+              <div className="max-w-md mx-auto bg-white border border-[#557B83]/20 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-xl space-y-6 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#1D5C58] to-[#39AEA9] p-[1.5px] mx-auto flex items-center justify-center shadow-md">
                   <div className="w-full h-full bg-[#12181A] rounded-2xl flex items-center justify-center">
                     <Lock className="w-8 h-8 text-[#39AEA9]" />
                   </div>
                 </div>
 
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono uppercase tracking-wider mb-2 border border-emerald-500/20">
-                    <ShieldCheck className="w-3.5 h-3.5" /> 256-Bit Encrypted Admin Passkey
+                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-mono uppercase tracking-wider mb-2.5 border border-emerald-200 font-semibold">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> 256-Bit Encrypted Admin Passkey
                   </div>
-                  <h2 className="text-xl font-display font-bold text-white">
+                  <h2 className="text-2xl font-display font-extrabold text-[#12181A] tracking-tight">
                     Unlock PayU Financial Ledger
                   </h2>
-                  <p className="text-xs text-white/60 mt-1 max-w-xs mx-auto leading-relaxed">
+                  <p className="text-xs text-[#557B83] mt-1.5 max-w-xs mx-auto leading-relaxed">
                     Enter the authorized administrator email configured in server environment to receive a secure single-use passkey.
                   </p>
                 </div>
 
                 {gateError && (
-                  <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2 text-left">
-                    <AlertCircle className="w-4 h-4 shrink-0" />
+                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2 text-left">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
                     <span>{gateError}</span>
                   </div>
                 )}
 
                 {gateSuccessMsg && (
-                  <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs flex items-center gap-2 text-left">
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2 text-left">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
                     <span>{gateSuccessMsg}</span>
                   </div>
                 )}
@@ -458,7 +469,7 @@ export default function ControlPanel() {
                 {otpStep === 'email' ? (
                   <form onSubmit={handleRequestOtp} className="space-y-4 text-left">
                     <div>
-                      <label className="block text-xs font-mono text-white/70 mb-1.5 uppercase">
+                      <label className="block text-xs font-mono text-[#557B83] font-bold mb-1.5 uppercase">
                         Admin Email Address
                       </label>
                       <input
@@ -467,14 +478,14 @@ export default function ControlPanel() {
                         onChange={(e) => setAdminEmailInput(e.target.value)}
                         placeholder="e.g. syaswanthkumar2006@gmail.com"
                         required
-                        className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-[#39AEA9] transition-all"
+                        className="w-full bg-[#F8FAFB] border border-[#557B83]/30 rounded-xl px-4 py-3 text-sm text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white transition-all shadow-xs"
                       />
                     </div>
 
                     <button
                       type="submit"
                       disabled={gateLoading}
-                      className="w-full py-3.5 px-6 rounded-xl font-bold uppercase tracking-wider text-xs bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] hover:from-[#164845] hover:to-[#2F938F] text-white shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                      className="w-full py-3.5 px-6 rounded-xl font-bold uppercase tracking-wider text-xs bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] hover:from-[#164845] hover:to-[#2F938F] text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       {gateLoading ? (
                         <>
@@ -488,11 +499,11 @@ export default function ControlPanel() {
                     </button>
 
                     {/* Test Deliverability / Mail-Tester Score Tool */}
-                    <div className="pt-3 border-t border-white/10 text-center">
+                    <div className="pt-3 border-t border-[#557B83]/15 text-center">
                       <button
                         type="button"
                         onClick={() => setShowTestMailModal(true)}
-                        className="text-[11px] text-[#39AEA9] hover:text-white font-mono flex items-center justify-center gap-1.5 mx-auto transition-colors cursor-pointer"
+                        className="text-[11px] text-[#39AEA9] hover:text-[#1D5C58] font-mono font-medium flex items-center justify-center gap-1.5 mx-auto transition-colors cursor-pointer"
                       >
                         <ShieldCheck className="w-3.5 h-3.5" /> Test Deliverability / Mail-Tester Score
                       </button>
@@ -501,7 +512,7 @@ export default function ControlPanel() {
                 ) : (
                   <form onSubmit={handleVerifyOtp} className="space-y-4 text-left">
                     <div>
-                      <label className="block text-xs font-mono text-white/70 mb-1.5 uppercase">
+                      <label className="block text-xs font-mono text-[#557B83] font-bold mb-1.5 uppercase">
                         Enter 6-Digit Passkey
                       </label>
                       <input
@@ -512,7 +523,7 @@ export default function ControlPanel() {
                         placeholder="123456"
                         required
                         autoFocus
-                        className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-widest text-white placeholder:text-white/30 focus:outline-none focus:border-[#39AEA9] transition-all"
+                        className="w-full bg-[#F8FAFB] border border-[#557B83]/30 rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-widest text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white transition-all shadow-xs"
                       />
                     </div>
 
@@ -520,14 +531,14 @@ export default function ControlPanel() {
                       <button
                         type="button"
                         onClick={() => setOtpStep('email')}
-                        className="w-1/3 py-3 rounded-xl border border-white/20 text-white/70 hover:text-white text-xs font-mono transition-colors"
+                        className="w-1/3 py-3 rounded-xl border border-[#557B83]/20 bg-white text-[#557B83] hover:text-[#12181A] hover:bg-[#F8FAFB] text-xs font-mono font-bold transition-colors cursor-pointer"
                       >
                         Back
                       </button>
                       <button
                         type="submit"
                         disabled={gateLoading || otpInput.length < 6}
-                        className="w-2/3 py-3.5 px-6 rounded-xl font-bold uppercase tracking-wider text-xs bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] hover:from-[#164845] hover:to-[#2F938F] text-white shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                        className="w-2/3 py-3.5 px-6 rounded-xl font-bold uppercase tracking-wider text-xs bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] hover:from-[#164845] hover:to-[#2F938F] text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                       >
                         {gateLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                         Unlock Ledger
@@ -543,84 +554,84 @@ export default function ControlPanel() {
                 {/* 4 Analytics Metric Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {/* Revenue Card */}
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-md relative overflow-hidden">
-                    <div className="flex items-center justify-between text-white/50 text-xs font-mono mb-2">
+                  <div className="bg-white border border-[#557B83]/20 rounded-2xl p-5 shadow-xs relative overflow-hidden">
+                    <div className="flex items-center justify-between text-[#557B83] text-xs font-mono mb-2">
                       <span>GROSS SETTLED REVENUE</span>
-                      <TrendingUp className="w-4 h-4 text-emerald-400" />
+                      <TrendingUp className="w-4 h-4 text-emerald-600" />
                     </div>
-                    <div className="text-2xl sm:text-3xl font-display font-extrabold text-white">
-                      ₹{metrics.totalRevenue.toLocaleString('en-IN')} <span className="text-xs text-white/40 font-normal">INR</span>
+                    <div className="text-2xl sm:text-3xl font-display font-extrabold text-[#12181A]">
+                      ₹{metrics.totalRevenue.toLocaleString('en-IN')} <span className="text-xs text-[#557B83] font-normal">INR</span>
                     </div>
-                    <p className="text-[11px] text-emerald-400 mt-2 flex items-center gap-1 font-mono">
-                      <CheckCircle2 className="w-3 h-3" /> PayU Confirmed Volume
+                    <p className="text-[11px] text-emerald-700 font-medium mt-2 flex items-center gap-1 font-mono">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> PayU Confirmed Volume
                     </p>
                   </div>
 
                   {/* Successful Orders Card */}
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-md relative overflow-hidden">
-                    <div className="flex items-center justify-between text-white/50 text-xs font-mono mb-2">
+                  <div className="bg-white border border-[#557B83]/20 rounded-2xl p-5 shadow-xs relative overflow-hidden">
+                    <div className="flex items-center justify-between text-[#557B83] text-xs font-mono mb-2">
                       <span>SUCCESSFUL ORDERS</span>
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     </div>
-                    <div className="text-2xl sm:text-3xl font-display font-extrabold text-white">
-                      {metrics.successCount} <span className="text-xs text-white/40 font-normal">orders</span>
+                    <div className="text-2xl sm:text-3xl font-display font-extrabold text-[#12181A]">
+                      {metrics.successCount} <span className="text-xs text-[#557B83] font-normal">orders</span>
                     </div>
-                    <p className="text-[11px] text-white/50 mt-2 font-mono">
+                    <p className="text-[11px] text-[#557B83] mt-2 font-mono">
                       {metrics.successRate}% Success conversion rate
                     </p>
                   </div>
 
                   {/* Failed Orders Card */}
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-md relative overflow-hidden">
-                    <div className="flex items-center justify-between text-white/50 text-xs font-mono mb-2">
+                  <div className="bg-white border border-[#557B83]/20 rounded-2xl p-5 shadow-xs relative overflow-hidden">
+                    <div className="flex items-center justify-between text-[#557B83] text-xs font-mono mb-2">
                       <span>FAILED / DECLINED</span>
-                      <XCircle className="w-4 h-4 text-red-400" />
+                      <XCircle className="w-4 h-4 text-red-500" />
                     </div>
-                    <div className="text-2xl sm:text-3xl font-display font-extrabold text-white">
-                      {metrics.failedCount} <span className="text-xs text-white/40 font-normal">failed</span>
+                    <div className="text-2xl sm:text-3xl font-display font-extrabold text-[#12181A]">
+                      {metrics.failedCount} <span className="text-xs text-[#557B83] font-normal">failed</span>
                     </div>
-                    <p className="text-[11px] text-red-400 mt-2 font-mono">
+                    <p className="text-[11px] text-red-600 font-medium mt-2 font-mono">
                       Bank drops / user cancellations
                     </p>
                   </div>
 
                   {/* Total Inquiries / Initiated */}
-                  <div className="bg-white/5 border border-white/10 rounded-2xl p-5 backdrop-blur-md relative overflow-hidden">
-                    <div className="flex items-center justify-between text-white/50 text-xs font-mono mb-2">
+                  <div className="bg-white border border-[#557B83]/20 rounded-2xl p-5 shadow-xs relative overflow-hidden">
+                    <div className="flex items-center justify-between text-[#557B83] text-xs font-mono mb-2">
                       <span>ALL SESSIONS</span>
                       <Activity className="w-4 h-4 text-[#39AEA9]" />
                     </div>
-                    <div className="text-2xl sm:text-3xl font-display font-extrabold text-white">
-                      {metrics.totalCount} <span className="text-xs text-white/40 font-normal">total</span>
+                    <div className="text-2xl sm:text-3xl font-display font-extrabold text-[#12181A]">
+                      {metrics.totalCount} <span className="text-xs text-[#557B83] font-normal">total</span>
                     </div>
-                    <p className="text-[11px] text-white/50 mt-2 font-mono">
+                    <p className="text-[11px] text-[#557B83] mt-2 font-mono">
                       {metrics.pendingCount} pending / in-progress
                     </p>
                   </div>
                 </div>
 
                 {/* Filter and Search Bar */}
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="bg-white border border-[#557B83]/20 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xs">
                   <div className="relative w-full md:w-96">
-                    <Search className="w-4 h-4 text-white/40 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Search className="w-4 h-4 text-[#557B83] absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="text"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       placeholder="Search TXN ID, Customer, Email, Product..."
-                      className="w-full bg-white/10 border border-white/15 rounded-xl pl-10 pr-4 py-2 text-xs text-white placeholder:text-white/40 focus:outline-none focus:border-[#39AEA9] transition-all font-mono"
+                      className="w-full bg-[#F8FAFB] border border-[#557B83]/20 rounded-xl pl-10 pr-4 py-2 text-xs text-[#12181A] placeholder:text-[#557B83]/50 focus:outline-none focus:border-[#39AEA9] focus:bg-white transition-all font-mono"
                     />
                   </div>
 
                   <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
                     {/* Status Filter buttons */}
-                    <div className="flex bg-white/10 rounded-xl p-1 text-xs font-mono">
+                    <div className="flex bg-[#F8FAFB] border border-[#557B83]/15 rounded-xl p-1 text-xs font-mono">
                       {(['all', 'success', 'failure', 'pending'] as const).map((st) => (
                         <button
                           key={st}
                           onClick={() => setStatusFilter(st)}
                           className={`px-3 py-1 rounded-lg capitalize transition-all cursor-pointer ${
-                            statusFilter === st ? 'bg-olive text-pistachio font-bold' : 'text-white/60 hover:text-white'
+                            statusFilter === st ? 'bg-[#12181A] text-white font-bold shadow-xs' : 'text-[#557B83] hover:text-[#12181A]'
                           }`}
                         >
                           {st}
@@ -630,30 +641,30 @@ export default function ControlPanel() {
 
                     <button
                       onClick={handleExportCSV}
-                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-mono text-white transition-colors cursor-pointer"
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-[#F8FAFB] border border-[#557B83]/20 text-xs font-mono text-[#12181A] transition-colors cursor-pointer shadow-xs"
                       title="Download CSV report"
                     >
-                      <Download className="w-3.5 h-3.5" />
-                      <span className="hidden sm:inline">Export CSV</span>
+                      <Download className="w-3.5 h-3.5 text-[#39AEA9]" />
+                      <span className="hidden sm:inline font-medium">Export CSV</span>
                     </button>
 
                     <button
                       onClick={fetchPayUTransactions}
                       disabled={paymentsLoading}
-                      className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-colors cursor-pointer disabled:opacity-50"
+                      className="p-2 rounded-xl bg-white hover:bg-[#F8FAFB] border border-[#557B83]/20 text-[#12181A] transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
                       title="Refresh data"
                     >
-                      <RefreshCw className={`w-3.5 h-3.5 ${paymentsLoading ? 'animate-spin' : ''}`} />
+                      <RefreshCw className={`w-3.5 h-3.5 text-[#39AEA9] ${paymentsLoading ? 'animate-spin' : ''}`} />
                     </button>
                   </div>
                 </div>
 
                 {/* Transactions Table */}
-                <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                <div className="bg-white border border-[#557B83]/20 rounded-2xl overflow-hidden shadow-xs">
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse text-xs font-mono">
                       <thead>
-                        <tr className="border-b border-white/10 bg-white/5 text-white/60">
+                        <tr className="border-b border-[#557B83]/15 bg-[#F8FAFB] text-[#557B83]">
                           <th className="py-3 px-4 font-semibold">Transaction ID</th>
                           <th className="py-3 px-4 font-semibold">Product / Item</th>
                           <th className="py-3 px-4 font-semibold">Amount</th>
@@ -664,61 +675,61 @@ export default function ControlPanel() {
                           <th className="py-3 px-4 font-semibold text-right">Details</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-[#557B83]/10">
                         {paymentsLoading ? (
                           <tr>
-                            <td colSpan={8} className="text-center py-12 text-white/50">
+                            <td colSpan={8} className="text-center py-12 text-[#557B83]">
                               <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-[#39AEA9]" />
                               Loading latest PayU transactions...
                             </td>
                           </tr>
                         ) : filteredPayments.length === 0 ? (
                           <tr>
-                            <td colSpan={8} className="text-center py-12 text-white/50">
-                              <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                            <td colSpan={8} className="text-center py-12 text-[#557B83]">
+                              <CreditCard className="w-8 h-8 mx-auto mb-2 opacity-30 text-[#39AEA9]" />
                               No transactions match the filter.
                             </td>
                           </tr>
                         ) : (
                           filteredPayments.map((txn) => (
-                            <tr key={txn.id || txn.txnid} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                              <td className="py-3.5 px-4 font-bold text-white select-all">
+                            <tr key={txn.id || txn.txnid} className="hover:bg-[#F8FAFB] transition-colors">
+                              <td className="py-3.5 px-4 font-bold text-[#12181A] select-all">
                                 {txn.txnid}
                               </td>
-                              <td className="py-3.5 px-4 max-w-[200px] truncate" title={txn.product}>
+                              <td className="py-3.5 px-4 max-w-[200px] truncate text-[#557B83]" title={txn.product}>
                                 {txn.product || 'Digital License'}
                               </td>
-                              <td className="py-3.5 px-4 font-bold text-white">
+                              <td className="py-3.5 px-4 font-bold text-[#12181A]">
                                 ₹{txn.amount?.toLocaleString('en-IN')}
                               </td>
                               <td className="py-3.5 px-4">
-                                <div className="text-white font-medium">{txn.customer_name || 'N/A'}</div>
-                                <div className="text-[10px] text-white/50 truncate max-w-[150px]">{txn.customer_email}</div>
+                                <div className="text-[#12181A] font-medium">{txn.customer_name || 'N/A'}</div>
+                                <div className="text-[10px] text-[#557B83] truncate max-w-[150px]">{txn.customer_email}</div>
                               </td>
                               <td className="py-3.5 px-4">
                                 {txn.status === 'success' ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
-                                    <CheckCircle2 className="w-3 h-3" /> SUCCESS
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 text-[10px] font-bold">
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-600" /> SUCCESS
                                   </span>
                                 ) : txn.status === 'failure' ? (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-bold">
-                                    <XCircle className="w-3 h-3" /> FAILED
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-red-100 text-red-800 border border-red-300 text-[10px] font-bold">
+                                    <XCircle className="w-3 h-3 text-red-600" /> FAILED
                                   </span>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px] font-bold">
-                                    <Clock className="w-3 h-3" /> PENDING
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-bold">
+                                    <Clock className="w-3 h-3 text-amber-600" /> PENDING
                                   </span>
                                 )}
                               </td>
                               <td className="py-3.5 px-4">
-                                <div className="text-white/80">{txn.bank_ref_num || txn.mihpayid || '—'}</div>
+                                <div className="text-[#12181A]">{txn.bank_ref_num || txn.mihpayid || '—'}</div>
                                 {txn.hash_verified && (
-                                  <span className="text-[10px] text-emerald-400 flex items-center gap-0.5">
-                                    <ShieldCheck className="w-3 h-3" /> SHA-512 Verified
+                                  <span className="text-[10px] text-emerald-700 font-medium flex items-center gap-0.5">
+                                    <ShieldCheck className="w-3 h-3 text-emerald-600" /> SHA-512 Verified
                                   </span>
                                 )}
                               </td>
-                              <td className="py-3.5 px-4 text-white/50 text-[11px]">
+                              <td className="py-3.5 px-4 text-[#557B83] text-[11px]">
                                 {txn.created_at ? new Date(txn.created_at).toLocaleString('en-IN', {
                                   month: 'short',
                                   day: 'numeric',
@@ -729,7 +740,7 @@ export default function ControlPanel() {
                               <td className="py-3.5 px-4 text-right">
                                 <button
                                   onClick={() => setSelectedTxn(txn)}
-                                  className="px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-white text-[11px] transition-colors cursor-pointer"
+                                  className="px-2.5 py-1 rounded-lg bg-[#F8FAFB] hover:bg-white border border-[#557B83]/20 text-[#12181A] font-bold text-[11px] transition-colors cursor-pointer shadow-2xs"
                                 >
                                   Inspect
                                 </button>
@@ -741,41 +752,40 @@ export default function ControlPanel() {
                     </table>
                   </div>
                 </div>
-
                 {/* Inspect Transaction Modal */}
                 {selectedTxn && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-[#12181A] border border-white/15 rounded-3xl p-6 max-w-lg w-full text-left font-mono text-xs space-y-4 shadow-2xl">
-                      <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+                    <div className="bg-white border border-[#557B83]/25 rounded-3xl p-6 max-w-lg w-full text-left font-mono text-xs space-y-4 shadow-2xl">
+                      <div className="flex items-center justify-between border-b border-[#557B83]/15 pb-3">
                         <div className="flex items-center gap-2">
                           <CreditCard className="w-4 h-4 text-[#39AEA9]" />
-                          <h3 className="font-bold text-white text-sm">Transaction Audit #{selectedTxn.txnid}</h3>
+                          <h3 className="font-bold text-[#12181A] text-sm">Transaction Audit #{selectedTxn.txnid}</h3>
                         </div>
                         <button
                           onClick={() => setSelectedTxn(null)}
-                          className="p-1 rounded-full hover:bg-white/10 text-white/60 hover:text-white"
+                          className="p-1 rounded-full hover:bg-[#557B83]/10 text-[#557B83] hover:text-[#12181A] cursor-pointer"
                         >
                           ✕
                         </button>
                       </div>
 
-                      <div className="space-y-2 bg-white/5 p-4 rounded-xl">
-                        <div className="flex justify-between"><span className="text-white/50">Product:</span><span className="text-white font-bold">{selectedTxn.product}</span></div>
-                        <div className="flex justify-between"><span className="text-white/50">Amount:</span><span className="text-white font-bold">₹{selectedTxn.amount} INR</span></div>
-                        <div className="flex justify-between"><span className="text-white/50">Customer Name:</span><span className="text-white">{selectedTxn.customer_name}</span></div>
-                        <div className="flex justify-between"><span className="text-white/50">Customer Email:</span><span className="text-white">{selectedTxn.customer_email}</span></div>
-                        <div className="flex justify-between"><span className="text-white/50">Customer Phone:</span><span className="text-white">{selectedTxn.customer_phone || 'N/A'}</span></div>
-                        <div className="flex justify-between"><span className="text-white/50">Settlement Status:</span><span className="text-emerald-400 font-bold uppercase">{selectedTxn.status}</span></div>
-                        <div className="flex justify-between"><span className="text-white/50">Bank Ref / mihpayid:</span><span className="text-white">{selectedTxn.bank_ref_num || selectedTxn.mihpayid || '—'}</span></div>
-                        <div className="flex justify-between"><span className="text-white/50">Reverse Hash Verified:</span><span className={selectedTxn.hash_verified ? 'text-emerald-400' : 'text-amber-400'}>{selectedTxn.hash_verified ? 'YES (SHA-512 Valid)' : 'Standard'}</span></div>
-                        <div className="flex justify-between"><span className="text-white/50">Payment Route:</span><span className="text-white">{selectedTxn.payment_mode}</span></div>
-                        <div className="flex justify-between"><span className="text-white/50">Date:</span><span className="text-white">{selectedTxn.created_at ? new Date(selectedTxn.created_at).toLocaleString() : 'N/A'}</span></div>
+                      <div className="space-y-2.5 bg-[#F8FAFB] p-4 rounded-2xl border border-[#557B83]/10">
+                        <div className="flex justify-between"><span className="text-[#557B83]">Product:</span><span className="text-[#12181A] font-bold">{selectedTxn.product}</span></div>
+                        <div className="flex justify-between"><span className="text-[#557B83]">Amount:</span><span className="text-[#12181A] font-bold">₹{selectedTxn.amount} INR</span></div>
+                        <div className="flex justify-between"><span className="text-[#557B83]">Customer Name:</span><span className="text-[#12181A] font-medium">{selectedTxn.customer_name}</span></div>
+                        <div className="flex justify-between"><span className="text-[#557B83]">Customer Email:</span><span className="text-[#12181A]">{selectedTxn.customer_email}</span></div>
+                        <div className="flex justify-between"><span className="text-[#557B83]">Customer Phone:</span><span className="text-[#12181A]">{selectedTxn.customer_phone || 'N/A'}</span></div>
+                        <div className="flex justify-between"><span className="text-[#557B83]">Settlement Status:</span><span className="text-emerald-700 font-bold uppercase">{selectedTxn.status}</span></div>
+                        <div className="flex justify-between"><span className="text-[#557B83]">Bank Ref / mihpayid:</span><span className="text-[#12181A]">{selectedTxn.bank_ref_num || selectedTxn.mihpayid || '—'}</span></div>
+                        <div className="flex justify-between"><span className="text-[#557B83]">Reverse Hash:</span><span className={selectedTxn.hash_verified ? 'text-emerald-700 font-medium' : 'text-amber-700'}>{selectedTxn.hash_verified ? 'YES (SHA-512 Valid)' : 'Standard'}</span></div>
+                        <div className="flex justify-between"><span className="text-[#557B83]">Payment Route:</span><span className="text-[#12181A]">{selectedTxn.payment_mode}</span></div>
+                        <div className="flex justify-between"><span className="text-[#557B83]">Date:</span><span className="text-[#12181A]">{selectedTxn.created_at ? new Date(selectedTxn.created_at).toLocaleString() : 'N/A'}</span></div>
                       </div>
 
                       <div className="flex justify-end pt-2">
                         <button
                           onClick={() => setSelectedTxn(null)}
-                          className="px-4 py-2 rounded-xl bg-olive text-pistachio font-bold hover:bg-olive-dark transition-colors cursor-pointer"
+                          className="px-5 py-2.5 rounded-xl bg-[#12181A] text-white font-bold hover:bg-[#1D5C58] transition-colors cursor-pointer text-xs uppercase tracking-wider"
                         >
                           Close Audit
                         </button>
@@ -786,12 +796,12 @@ export default function ControlPanel() {
 
                 {/* Live Deliverability & Spam Score Tester Modal */}
                 {showTestMailModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-                    <div className="bg-[#12181A] border border-white/15 rounded-3xl p-6 sm:p-8 max-w-md w-full text-left font-mono text-xs space-y-5 shadow-2xl">
-                      <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+                    <div className="bg-white border border-[#557B83]/25 rounded-3xl p-6 sm:p-8 max-w-md w-full text-left font-mono text-xs space-y-5 shadow-2xl">
+                      <div className="flex items-center justify-between border-b border-[#557B83]/15 pb-3">
                         <div className="flex items-center gap-2">
                           <ShieldCheck className="w-5 h-5 text-[#39AEA9]" />
-                          <h3 className="font-bold text-white text-sm">Deliverability & Spam Score Tester</h3>
+                          <h3 className="font-bold text-[#12181A] text-sm">Deliverability & Spam Score Tester</h3>
                         </div>
                         <button
                           onClick={() => {
@@ -799,33 +809,33 @@ export default function ControlPanel() {
                             setTestEmailResult(null);
                             setTestEmailError(null);
                           }}
-                          className="p-1 rounded-full hover:bg-white/10 text-white/60 hover:text-white"
+                          className="p-1 rounded-full hover:bg-[#557B83]/10 text-[#557B83] hover:text-[#12181A] cursor-pointer"
                         >
                           ✕
                         </button>
                       </div>
 
-                      <p className="text-white/70 leading-relaxed font-sans text-xs">
-                        Enter any testing email address (such as your address on <strong className="text-[#39AEA9]">mail-tester.com</strong>, Mailtrap, or a dummy mailbox) to test real-time inbox placement and spam scoring:
+                      <p className="text-[#557B83] leading-relaxed font-sans text-xs">
+                        Enter any testing email address (such as your address on <strong className="text-[#1D5C58]">mail-tester.com</strong>, Mailtrap, or a dummy mailbox) to test real-time inbox placement and spam scoring:
                       </p>
 
                       <form onSubmit={handleSendTestEmail} className="space-y-3">
                         <div>
-                          <label className="block text-[11px] uppercase text-white/60 mb-1">Target Testing Mail Address</label>
+                          <label className="block text-[11px] uppercase text-[#557B83] font-bold mb-1">Target Testing Mail Address</label>
                           <input
                             type="email"
                             value={testEmailInput}
                             onChange={(e) => setTestEmailInput(e.target.value)}
                             placeholder="e.g. test-xyz123@mail-tester.com"
                             required
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-xs text-white placeholder:text-white/30 focus:outline-none focus:border-[#39AEA9] font-mono"
+                            className="w-full bg-[#F8FAFB] border border-[#557B83]/25 rounded-xl px-4 py-2.5 text-xs text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white font-mono"
                           />
                         </div>
 
                         <button
                           type="submit"
                           disabled={testEmailLoading}
-                          className="w-full py-3 rounded-xl font-bold uppercase tracking-wider text-xs bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] hover:from-[#164845] hover:to-[#2F938F] text-white shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                          className="w-full py-3 rounded-xl font-bold uppercase tracking-wider text-xs bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] hover:from-[#164845] hover:to-[#2F938F] text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                         >
                           {testEmailLoading ? (
                             <>
@@ -840,24 +850,24 @@ export default function ControlPanel() {
                       </form>
 
                       {testEmailError && (
-                        <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4 shrink-0" />
+                        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
                           <span>{testEmailError}</span>
                         </div>
                       )}
 
                       {testEmailResult && (
-                        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 space-y-2 text-xs">
-                          <div className="flex items-center gap-2 font-bold text-sm">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 space-y-2 text-xs">
+                          <div className="flex items-center gap-2 font-bold text-sm text-emerald-900">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                             <span>{testEmailResult.spamAudit?.rating || 'DISPATCHED SUCCESSFULLY'}</span>
                           </div>
-                          <div className="text-[11px] text-white/80 space-y-1">
-                            <div>• <strong className="text-white">Internal Spam Score:</strong> {testEmailResult.spamAudit?.score} / 10.0 (Safe threshold &lt; 2.0)</div>
-                            <div>• <strong className="text-white">Delivered To:</strong> {testEmailResult.deliveredTo}</div>
-                            {testEmailResult.emailId && <div>• <strong className="text-white">Resend Message ID:</strong> {testEmailResult.emailId}</div>}
+                          <div className="text-[11px] text-[#12181A] space-y-1">
+                            <div>• <strong>Internal Spam Score:</strong> {testEmailResult.spamAudit?.score} / 10.0 (Safe threshold &lt; 2.0)</div>
+                            <div>• <strong>Delivered To:</strong> {testEmailResult.deliveredTo}</div>
+                            {testEmailResult.emailId && <div>• <strong>Resend Message ID:</strong> {testEmailResult.emailId}</div>}
                           </div>
-                          <p className="text-[10px] text-emerald-400/80 pt-1">
+                          <p className="text-[10px] text-emerald-700 pt-1 font-medium">
                             Now check your score on Mail-Tester or open your mailbox to verify inbox placement!
                           </p>
                         </div>
@@ -874,37 +884,37 @@ export default function ControlPanel() {
 
         {/* Tab 2: Contact Messages */}
         {activeTab === 'messages' && (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div className="bg-white border border-[#557B83]/20 rounded-2xl p-6 shadow-xs">
             {loading ? (
               <div className="flex justify-center py-12">
                 <RefreshCw className="animate-spin text-[#39AEA9] w-8 h-8" />
               </div>
             ) : messages.length === 0 ? (
-              <div className="text-center py-12 text-white/50">
-                <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                <p>No contact messages yet.</p>
+              <div className="text-center py-12 text-[#557B83]">
+                <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-30 text-[#39AEA9]" />
+                <p className="font-mono text-sm">No contact messages yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {messages.map((entry) => (
-                  <div key={entry.id} className="p-5 rounded-2xl border bg-white/5 border-white/10">
+                  <div key={entry.id} className="p-5 rounded-2xl border bg-[#F8FAFB] border-[#557B83]/15">
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white/50">
+                        <div className="w-10 h-10 rounded-full bg-white border border-[#557B83]/20 flex items-center justify-center text-[#39AEA9] shadow-xs">
                           <User className="w-5 h-5" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-lg">{entry.name}</h4>
-                          <a href={`mailto:${entry.email}`} className="text-sm text-[#39AEA9] hover:underline flex items-center gap-1">
+                          <h4 className="font-bold text-base text-[#12181A]">{entry.name}</h4>
+                          <a href={`mailto:${entry.email}`} className="text-xs font-mono text-[#39AEA9] hover:underline flex items-center gap-1">
                             <Mail className="w-3 h-3" /> {entry.email}
                           </a>
                         </div>
                       </div>
-                      <span className="text-xs font-mono text-white/40">
+                      <span className="text-xs font-mono text-[#557B83]">
                         {entry.created_at ? new Date(entry.created_at).toLocaleString() : ''}
                       </span>
                     </div>
-                    <p className="text-white/80 whitespace-pre-wrap leading-relaxed">{entry.message}</p>
+                    <p className="text-[#12181A] whitespace-pre-wrap leading-relaxed text-sm bg-white p-4 rounded-xl border border-[#557B83]/10">{entry.message}</p>
                   </div>
                 ))}
               </div>
@@ -914,37 +924,37 @@ export default function ControlPanel() {
 
         {/* Tab 3: Visitors */}
         {activeTab === 'visitors' && (
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+          <div className="bg-white border border-[#557B83]/20 rounded-2xl p-6 shadow-xs">
             {loading ? (
               <div className="flex justify-center py-12">
                 <RefreshCw className="animate-spin text-[#39AEA9] w-8 h-8" />
               </div>
             ) : visitors.length === 0 ? (
-              <div className="text-center py-12 text-white/50">
-                <Activity className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                <p>No visitors recorded yet.</p>
+              <div className="text-center py-12 text-[#557B83]">
+                <Activity className="w-12 h-12 mx-auto mb-4 opacity-30 text-[#39AEA9]" />
+                <p className="font-mono text-sm">No visitors recorded yet.</p>
               </div>
             ) : (
               <div className="overflow-x-auto font-mono text-xs">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="border-b border-white/10 text-white/60">
-                      <th className="pb-3 font-medium">Path</th>
-                      <th className="pb-3 font-medium">User Agent</th>
-                      <th className="pb-3 font-medium">Timestamp</th>
+                    <tr className="border-b border-[#557B83]/15 text-[#557B83]">
+                      <th className="pb-3 font-semibold">Path</th>
+                      <th className="pb-3 font-semibold">User Agent</th>
+                      <th className="pb-3 font-semibold">Timestamp</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-[#557B83]/10">
                     {visitors.map((entry) => (
-                      <tr key={entry.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                        <td className="py-4 font-medium flex items-center gap-2 text-white">
+                      <tr key={entry.id} className="hover:bg-[#F8FAFB] transition-colors">
+                        <td className="py-4 font-bold flex items-center gap-2 text-[#12181A]">
                           <Globe className="w-4 h-4 text-[#39AEA9]" />
                           {entry.path}
                         </td>
-                        <td className="py-4 text-white/60 max-w-xs truncate" title={entry.user_agent || entry.userAgent}>
+                        <td className="py-4 text-[#557B83] max-w-xs truncate" title={entry.user_agent || entry.userAgent}>
                           {entry.user_agent || entry.userAgent}
                         </td>
-                        <td className="py-4 text-white/60">
+                        <td className="py-4 text-[#557B83]">
                           {entry.created_at ? new Date(entry.created_at).toLocaleString() : ''}
                         </td>
                       </tr>
@@ -1027,51 +1037,53 @@ function PushPanel() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="bg-olive/10 border border-olive/20 rounded-xl p-6 text-center">
-        <Bell className="w-10 h-10 mx-auto text-white mb-3" />
-        <h2 className="text-xl font-bold font-display text-white">Broadcast an Update</h2>
-        <p className="text-white/60 text-sm mt-1">Send a web push notification directly to subscribed devices.</p>
+      <div className="bg-white border border-[#557B83]/20 rounded-2xl p-6 text-center shadow-xs">
+        <div className="w-12 h-12 rounded-2xl bg-[#39AEA9]/10 text-[#39AEA9] flex items-center justify-center mx-auto mb-3">
+          <Bell className="w-6 h-6" />
+        </div>
+        <h2 className="text-xl font-bold font-display text-[#12181A]">Broadcast an Update</h2>
+        <p className="text-[#557B83] text-xs mt-1">Send a web push notification directly to subscribed devices.</p>
       </div>
 
-      <form onSubmit={sendPush} className="space-y-4 bg-white/5 border border-white/10 p-6 rounded-xl">
+      <form onSubmit={sendPush} className="space-y-4 bg-white border border-[#557B83]/20 p-6 rounded-2xl shadow-xs">
         <div>
-          <label className="block text-sm font-bold text-white/70 mb-2">Notification Title</label>
+          <label className="block text-xs font-mono font-bold text-[#557B83] uppercase mb-2">Notification Title</label>
           <input 
             type="text" 
             value={title}
             onChange={e => setTitle(e.target.value)}
             placeholder="e.g. New Project Published!" 
             required
-            className="w-full bg-white/10 border border-white/20 rounded py-3 px-4 text-white placeholder:text-white/30 focus:outline-none focus:border-olive transition-all"
+            className="w-full bg-[#F8FAFB] border border-[#557B83]/25 rounded-xl py-3 px-4 text-sm text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white transition-all shadow-xs"
           />
         </div>
         <div>
-          <label className="block text-sm font-bold text-white/70 mb-2">Message Body</label>
+          <label className="block text-xs font-mono font-bold text-[#557B83] uppercase mb-2">Message Body</label>
           <textarea 
             value={body}
             onChange={e => setBody(e.target.value)}
             placeholder="e.g. Check out my latest work on..." 
             required
             rows={3}
-            className="w-full bg-white/10 border border-white/20 rounded py-3 px-4 text-white placeholder:text-white/30 focus:outline-none focus:border-olive transition-all resize-none"
+            className="w-full bg-[#F8FAFB] border border-[#557B83]/25 rounded-xl py-3 px-4 text-sm text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white transition-all resize-none shadow-xs"
           />
         </div>
         <div>
-          <label className="block text-sm font-bold text-white/70 mb-2">Target URL (Optional)</label>
+          <label className="block text-xs font-mono font-bold text-[#557B83] uppercase mb-2">Target URL (Optional)</label>
           <input 
             type="text" 
             value={url}
             onChange={e => setUrl(e.target.value)}
             placeholder="e.g. /#projects or https://..." 
-            className="w-full bg-white/10 border border-white/20 rounded py-3 px-4 text-white placeholder:text-white/30 focus:outline-none focus:border-olive transition-all"
+            className="w-full bg-[#F8FAFB] border border-[#557B83]/25 rounded-xl py-3 px-4 text-sm text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white transition-all font-mono shadow-xs"
           />
         </div>
 
         {statusMessage && (
-          <div className={`p-3 rounded text-sm font-medium ${
-            status === 'error' ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
-            status === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 
-            'bg-olive/20 text-olive border border-olive/30'
+          <div className={`p-3.5 rounded-xl text-xs font-mono font-medium ${
+            status === 'error' ? 'bg-red-50 text-red-700 border border-red-200' : 
+            status === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 
+            'bg-[#F8FAFB] text-[#557B83] border border-[#557B83]/20'
           }`}>
             {statusMessage}
           </div>
@@ -1080,9 +1092,9 @@ function PushPanel() {
         <button 
           type="submit"
           disabled={status === 'sending'}
-          className="w-full flex items-center justify-center space-x-2 bg-olive text-pistachio px-6 py-3 rounded font-bold hover:bg-olive-dark transition-colors disabled:opacity-70 mt-4 cursor-pointer"
+          className="w-full flex items-center justify-center space-x-2 bg-[#12181A] hover:bg-[#1D5C58] text-white px-6 py-3.5 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors disabled:opacity-50 cursor-pointer shadow-md hover:shadow-lg"
         >
-          <Send className="w-5 h-5" />
+          <Send className="w-4 h-4 text-[#39AEA9]" />
           <span>{status === 'sending' ? 'Sending Broadcast...' : 'Fire Broadcast'}</span>
         </button>
       </form>
