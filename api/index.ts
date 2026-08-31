@@ -489,6 +489,40 @@ app.post('/api/push/send', async (req, res) => {
   }
 });
 
+// Endpoint to save or update WebPush subscription directly in Supabase
+app.post('/api/push/save-subscription', async (req, res) => {
+  const { subscription, email, userAgent } = req.body;
+  if (!subscription) {
+    return res.status(400).json({ error: 'Subscription data is required' });
+  }
+
+  const endpoint = subscription.endpoint || (typeof subscription === 'string' && JSON.parse(subscription).endpoint);
+  if (!endpoint) {
+    return res.status(400).json({ error: 'Invalid subscription endpoint' });
+  }
+
+  try {
+    if (supabaseServer) {
+      const { data, error } = await supabaseServer.from('push_subscriptions').upsert([{
+        endpoint,
+        subscription: typeof subscription === 'string' ? JSON.parse(subscription) : subscription,
+        email: email || 'contact@ykyash.in',
+        user_agent: userAgent || req.headers['user-agent'] || 'Browser Client',
+        updated_at: new Date().toISOString()
+      }], { onConflict: 'endpoint' });
+
+      if (error) {
+        console.error('[Supabase Push Subscription Error]:', error);
+        return res.status(500).json({ error: error.message });
+      }
+    }
+    res.json({ success: true, message: 'Subscription saved successfully' });
+  } catch (err: any) {
+    console.error('Save subscription error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // Active checkout cooldown map to prevent duplicate / rapid requests from hitting PayU within 8s
 const activeCheckoutLockMap = new Map<string, number>();

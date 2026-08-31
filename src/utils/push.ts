@@ -22,6 +22,22 @@ export async function savePushSubscription(subscription: PushSubscription, email
     const rawSubJson = subscription.toJSON ? subscription.toJSON() : JSON.parse(JSON.stringify(subscription));
     const endpoint = subscription.endpoint || rawSubJson.endpoint;
 
+    // 1. Primary: Save via Serverless Backend API
+    try {
+      await fetch('/api/push/save-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subscription: rawSubJson,
+          email: email || 'contact@ykyash.in',
+          userAgent: navigator.userAgent
+        })
+      });
+    } catch (apiErr) {
+      console.warn('Server push save note:', apiErr);
+    }
+
+    // 2. Secondary: Direct Supabase Client Upsert
     if (supabase && endpoint) {
       const { data: existing, error: selectErr } = await supabase
         .from('push_subscriptions')
