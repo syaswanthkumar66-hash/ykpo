@@ -38,13 +38,12 @@ export function Footer() {
           {/* Explore Links */}
           <div>
             <h4 className="text-[#12181A] font-bold text-xs uppercase tracking-widest mb-4 font-mono">
-              Explore Store & Work
+              Explore Portfolio & Work
             </h4>
             <ul className="space-y-2.5 text-xs sm:text-sm">
               <li><Link to="/" className="text-[#557B83] hover:text-[#12181A] transition-colors">Home Overview</Link></li>
-              <li><Link to="/store" className="text-[#39AEA9] font-semibold hover:text-[#12181A] transition-colors flex items-center gap-1.5">Digital Products Store <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#39AEA9]/15 font-mono">NEW</span></Link></li>
-              <li><Link to="/services" className="text-[#557B83] hover:text-[#12181A] transition-colors">Services & Milestones</Link></li>
-              <li><Link to="/projects" className="text-[#557B83] hover:text-[#12181A] transition-colors">Hardware & Web Case Studies</Link></li>
+              <li><Link to="/projects" className="text-[#557B83] hover:text-[#12181A] transition-colors">Hardware & Web Projects</Link></li>
+              <li><Link to="/services" className="text-[#39AEA9] font-semibold hover:text-[#12181A] transition-colors flex items-center gap-1.5">Client Commission & Milestones <span className="px-1.5 py-0.2 rounded text-[9px] bg-[#39AEA9]/15 font-mono">PAYU</span></Link></li>
               <li><Link to="/contact" className="text-[#557B83] hover:text-[#12181A] transition-colors">Direct Contact Desk</Link></li>
             </ul>
           </div>

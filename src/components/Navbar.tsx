@@ -13,11 +13,16 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const navLinks = [
+  interface NavItem {
+    name: string;
+    path: string;
+    badge?: string;
+  }
+
+  const navLinks: NavItem[] = [
     { name: 'Home', path: '/' },
-    { name: 'Store', path: '/store', badge: 'New' },
-    { name: 'Services', path: '/services' },
-    { name: 'Projects', path: '/projects' },
+    { name: 'Projects & Case Studies', path: '/projects' },
+    { name: 'Services & Milestones', path: '/services', badge: 'PayU' },
     { name: 'Contact', path: '/contact' },
   ];
 

@@ -21,7 +21,6 @@ import {
 
 import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
-import Store from './pages/Store';
 import Services from './pages/Services';
 import Projects from './pages/Projects';
 import Contact from './pages/Contact';
@@ -32,7 +31,7 @@ import Delivery from './pages/legal/Delivery';
 import { PaymentSuccess, PaymentFailure } from './pages/PaymentStatus';
 import ControlPanel from './pages/ControlPanel';
 
-import { DIGITAL_PRODUCTS, PROJECTS, SKILL_CATEGORIES, MERCHANT_KYC_DETAILS } from './data/portfolioData';
+import { SERVICES, PROJECTS, SKILL_CATEGORIES, MERCHANT_KYC_DETAILS } from './data/portfolioData';
 
 function HomePage() {
   return (
@@ -58,17 +57,17 @@ function HomePage() {
           </h1>
 
           <p className="text-[#557B83] text-base sm:text-xl max-w-2xl mx-auto leading-relaxed font-normal">
-            I craft high-performance web applications, embedded FreeRTOS microcontroller firmware, and production-ready digital developer kits with PayU payment architectures.
+            Specialized Full-Stack & IoT Systems Engineer architecting real-time embedded microcontroller firmware, resilient cloud backends, and enterprise web solutions with seamless PayU transaction flows.
           </p>
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <Link
-              to="/store"
+              to="/projects"
               className="px-8 py-4 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-dark flex items-center gap-2.5 cursor-pointer shadow-lg"
             >
-              <ShoppingBag className="w-4 h-4 text-[#E5EFC1]" />
-              Explore Digital Store (Source Code)
+              <Cpu className="w-4 h-4 text-[#E5EFC1]" />
+              View Featured Projects
             </Link>
 
             <Link
@@ -76,76 +75,76 @@ function HomePage() {
               className="px-8 py-4 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-glass flex items-center gap-2.5 cursor-pointer shadow-sm"
             >
               <CreditCard className="w-4 h-4 text-[#39AEA9]" />
-              Commission Freelance Services
+              Commission & Milestone Pay (PayU)
             </Link>
           </div>
 
           {/* Metrics / Trust Badges */}
           <div className="pt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-3xl mx-auto">
             <div className="glass-panel p-5 rounded-2xl">
-              <span className="text-2xl sm:text-3xl font-display font-bold text-[#12181A] block">100%</span>
-              <span className="text-xs text-[#557B83] uppercase tracking-wider font-mono">Instant Digital Delivery</span>
+              <span className="text-2xl sm:text-3xl font-display font-bold text-[#12181A] block">15+</span>
+              <span className="text-xs text-[#557B83] uppercase tracking-wider font-mono">Shipped Projects</span>
             </div>
             <div className="glass-panel p-5 rounded-2xl">
-              <span className="text-2xl sm:text-3xl font-display font-bold text-[#39AEA9] block">INR ₹</span>
-              <span className="text-xs text-[#557B83] uppercase tracking-wider font-mono">Secure Payment Gateway</span>
+              <span className="text-2xl sm:text-3xl font-display font-bold text-[#39AEA9] block">PayU Live</span>
+              <span className="text-xs text-[#557B83] uppercase tracking-wider font-mono">Integrated Payments</span>
             </div>
             <div className="glass-panel p-5 rounded-2xl">
               <span className="text-2xl sm:text-3xl font-display font-bold text-[#1D5C58] block">ESP32 & Web</span>
               <span className="text-xs text-[#557B83] uppercase tracking-wider font-mono">Hardware & Cloud</span>
             </div>
             <div className="glass-panel p-5 rounded-2xl">
-              <span className="text-2xl sm:text-3xl font-display font-bold text-[#12181A] block">Commercial</span>
-              <span className="text-xs text-[#557B83] uppercase tracking-wider font-mono">Full Source License</span>
+              <span className="text-2xl sm:text-3xl font-display font-bold text-[#12181A] block">Full-Stack</span>
+              <span className="text-xs text-[#557B83] uppercase tracking-wider font-mono">React & Microservices</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. Featured Top Digital Products (Store Highlights) */}
+      {/* 2. Featured Services & Milestone Commission (PayU Integrated) */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#557B83]/15">
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#39AEA9] mb-2 font-mono">
-              <Sparkles className="w-3.5 h-3.5" /> Featured Code & Firmware
+              <Sparkles className="w-3.5 h-3.5" /> Client Engagements & Retainers
             </div>
             <h2 className="text-3xl sm:text-4xl font-display font-bold text-[#12181A]">
-              Top Digital Products & Developer Kits
+              Engineering Services & Milestone Contracts
             </h2>
           </div>
           <Link
-            to="/store"
+            to="/services"
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#39AEA9] hover:text-[#12181A] transition-colors"
           >
-            View All Products in Store <ArrowRight className="w-4 h-4" />
+            Explore All Services & Retainers <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {DIGITAL_PRODUCTS.slice(0, 3).map((prod) => (
+          {SERVICES.map((srv) => (
             <div
-              key={prod.id}
+              key={srv.id}
               className="glass-panel-interactive rounded-3xl p-6 sm:p-8 flex flex-col justify-between group"
             >
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#39AEA9]/15 text-[#1D5C58] border border-[#39AEA9]/30 font-mono">
-                    {prod.badge || 'Starter Kit'}
+                    {srv.duration}
                   </span>
                   <span className="text-2xl font-display font-bold text-[#12181A]">
-                    ₹{prod.priceINR.toLocaleString('en-IN')}
+                    ₹{srv.priceINR.toLocaleString('en-IN')}
                   </span>
                 </div>
 
                 <h3 className="text-xl font-display font-bold text-[#12181A] mb-2 group-hover:text-[#39AEA9] transition-colors">
-                  {prod.title}
+                  {srv.title}
                 </h3>
                 <p className="text-xs text-[#557B83] mb-6 leading-relaxed">
-                  {prod.tagline}
+                  {srv.description}
                 </p>
 
                 <div className="space-y-2 mb-6">
-                  {prod.features.slice(0, 3).map((feat, idx) => (
+                  {srv.features.slice(0, 3).map((feat, idx) => (
                     <div key={idx} className="flex items-start gap-2 text-xs text-[#12181A]/85">
                       <Check className="w-3.5 h-3.5 text-[#39AEA9] shrink-0 mt-0.5" />
                       <span>{feat}</span>
@@ -156,10 +155,10 @@ function HomePage() {
 
               <div className="pt-4 border-t border-[#557B83]/15">
                 <Link
-                  to="/store"
+                  to="/services"
                   className="w-full py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-dark flex items-center justify-center gap-2 shadow-md"
                 >
-                  <CreditCard className="w-3.5 h-3.5 text-[#E5EFC1]" /> Buy Now (₹{prod.priceINR})
+                  <CreditCard className="w-3.5 h-3.5 text-[#E5EFC1]" /> Retain / Commission (PayU)
                 </Link>
               </div>
             </div>
@@ -316,7 +315,6 @@ export default function App() {
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/store" element={<Store />} />
           <Route path="/services" element={<Services />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/contact" element={<Contact />} />
