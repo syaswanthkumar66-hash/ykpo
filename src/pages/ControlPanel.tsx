@@ -107,6 +107,7 @@ export default function ControlPanel() {
   // Live Deliverability / Mail-Tester Test Modal State
   const [showTestMailModal, setShowTestMailModal] = useState(false);
   const [testEmailInput, setTestEmailInput] = useState('');
+  const [testFromInput, setTestFromInput] = useState('YK Yash <auth@verify.ykyash.in>');
   const [testEmailLoading, setTestEmailLoading] = useState(false);
   const [testEmailResult, setTestEmailResult] = useState<any>(null);
   const [testEmailError, setTestEmailError] = useState<string | null>(null);
@@ -331,7 +332,10 @@ export default function ControlPanel() {
       const res = await fetch('/api/admin/payu-auth/test-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetEmail: testEmailInput.trim() })
+        body: JSON.stringify({ 
+          targetEmail: testEmailInput.trim(),
+          customFrom: testFromInput
+        })
       });
       const data = await res.json();
       if (!res.ok || !data.success) {
@@ -836,17 +840,34 @@ export default function ControlPanel() {
                         Enter any testing email address (such as your address on <strong className="text-[#1D5C58]">mail-tester.com</strong>, Mailtrap, or a dummy mailbox) to test real-time inbox placement and spam scoring:
                       </p>
 
-                      <form onSubmit={handleSendTestEmail} className="space-y-3">
+                      <form onSubmit={handleSendTestEmail} className="space-y-3.5">
                         <div>
-                          <label className="block text-[11px] uppercase text-[#557B83] font-bold mb-1">Target Testing Mail Address</label>
+                          <label className="block text-[11px] uppercase text-[#557B83] font-bold mb-1">Target Recipient Email Address</label>
                           <input
                             type="email"
                             value={testEmailInput}
                             onChange={(e) => setTestEmailInput(e.target.value)}
-                            placeholder="e.g. test-xyz123@mail-tester.com"
+                            placeholder="Enter recipient email (e.g. your email or mail-tester)"
                             required
                             className="w-full bg-[#F8FAFB] border border-[#557B83]/25 rounded-xl px-4 py-2.5 text-xs text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white font-mono"
                           />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] uppercase text-[#557B83] font-bold mb-1">From Sender Address</label>
+                          <select
+                            value={testFromInput}
+                            onChange={(e) => setTestFromInput(e.target.value)}
+                            className="w-full bg-[#F8FAFB] border border-[#557B83]/25 rounded-xl px-3 py-2 text-xs text-[#12181A] focus:outline-none focus:border-[#39AEA9] focus:bg-white font-mono cursor-pointer"
+                          >
+                            <option value="YK Yash <auth@verify.ykyash.in>">YK Yash &lt;auth@verify.ykyash.in&gt; (Custom Domain)</option>
+                            <option value="YK Yash <onboarding@resend.dev>">YK Yash &lt;onboarding@resend.dev&gt; (Resend Sandbox)</option>
+                          </select>
+                          <p className="text-[10px] text-[#557B83] mt-1 font-sans">
+                            {testFromInput.includes('resend.dev') 
+                              ? '⚠️ Resend Sandbox can only deliver to your registered Resend account email.' 
+                              : '✅ Custom domain sends to any inbox once DNS records are verified.'}
+                          </p>
                         </div>
 
                         <button
@@ -856,11 +877,11 @@ export default function ControlPanel() {
                         >
                           {testEmailLoading ? (
                             <>
-                              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Dispatching & Auditing...
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Dispatching Test Email...
                             </>
                           ) : (
                             <>
-                              <Send className="w-3.5 h-3.5" /> Dispatch Test Email
+                              <Send className="w-3.5 h-3.5" /> Send Test Email
                             </>
                           )}
                         </button>

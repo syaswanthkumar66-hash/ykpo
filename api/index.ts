@@ -1248,9 +1248,9 @@ app.post('/api/admin/payu-auth/request-otp', async (req, res) => {
  */
 app.post('/api/admin/payu-auth/test-email', async (req, res) => {
   try {
-    const { targetEmail } = req.body;
+    const { targetEmail, customFrom } = req.body;
     if (!targetEmail || typeof targetEmail !== 'string' || !targetEmail.includes('@')) {
-      return res.status(400).json({ error: 'A valid target email address is required (e.g. test-xxxx@mail-tester.com or your testing email).' });
+      return res.status(400).json({ error: 'A valid target email address is required.' });
     }
 
     const apiKey = process.env.RESEND_API_KEY;
@@ -1259,7 +1259,7 @@ app.post('/api/admin/payu-auth/test-email', async (req, res) => {
     }
 
     const testOtp = Math.floor(100000 + Math.random() * 900000).toString();
-    const senderAddress = process.env.RESEND_FROM_EMAIL || 'YK Yash <auth@verify.ykyash.in>';
+    const senderAddress = customFrom?.trim() || process.env.RESEND_FROM_EMAIL || 'YK Yash <auth@verify.ykyash.in>';
     const emailSubject = 'Test Message from ykyash.in';
 
     const emailHtml = `<!DOCTYPE html>
