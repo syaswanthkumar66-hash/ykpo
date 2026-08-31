@@ -433,7 +433,10 @@ export default function ControlPanel() {
           <div>
             {otpStep !== 'unlocked' ? (
               /* Security Gate Modal / Card */
-              <div className="max-w-md mx-auto bg-white border border-[#557B83]/20 rounded-3xl p-6 sm:p-8 backdrop-blur-xl shadow-xl space-y-6 text-center">
+              <div 
+                className="max-w-md mx-auto rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-center"
+                style={{ backgroundColor: '#ffffff', border: '1px solid #cbd5e1', color: '#0f172a' }}
+              >
                 <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#1D5C58] to-[#39AEA9] p-[1.5px] mx-auto flex items-center justify-center shadow-md">
                   <div className="w-full h-full bg-[#12181A] rounded-2xl flex items-center justify-center">
                     <Lock className="w-8 h-8 text-[#39AEA9]" />
@@ -441,13 +444,19 @@ export default function ControlPanel() {
                 </div>
 
                 <div>
-                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-mono uppercase tracking-wider mb-2.5 border border-emerald-200 font-semibold">
+                  <div className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-emerald-50 text-emerald-800 text-xs font-mono uppercase tracking-wider mb-2.5 border border-emerald-200 font-bold">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> 256-Bit Encrypted Admin Passkey
                   </div>
-                  <h2 className="text-2xl font-display font-extrabold text-[#12181A] tracking-tight">
+                  <h2 
+                    className="text-2xl font-display font-extrabold tracking-tight"
+                    style={{ color: '#0f172a' }}
+                  >
                     Unlock PayU Financial Ledger
                   </h2>
-                  <p className="text-xs text-[#557B83] mt-1.5 max-w-xs mx-auto leading-relaxed">
+                  <p 
+                    className="text-xs mt-1.5 max-w-xs mx-auto leading-relaxed font-medium"
+                    style={{ color: '#475569' }}
+                  >
                     Enter the authorized administrator email configured in server environment to receive a secure single-use passkey.
                   </p>
                 </div>
@@ -469,7 +478,10 @@ export default function ControlPanel() {
                 {otpStep === 'email' ? (
                   <form onSubmit={handleRequestOtp} className="space-y-4 text-left">
                     <div>
-                      <label className="block text-xs font-mono text-[#557B83] font-bold mb-1.5 uppercase">
+                      <label 
+                        className="block text-xs font-mono font-bold mb-1.5 uppercase tracking-wider"
+                        style={{ color: '#334155' }}
+                      >
                         Admin Email Address
                       </label>
                       <input
@@ -478,7 +490,8 @@ export default function ControlPanel() {
                         onChange={(e) => setAdminEmailInput(e.target.value)}
                         placeholder="e.g. syaswanthkumar2006@gmail.com"
                         required
-                        className="w-full bg-[#F8FAFB] border border-[#557B83]/30 rounded-xl px-4 py-3 text-sm text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white transition-all shadow-xs"
+                        className="w-full rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#39AEA9] transition-all"
+                        style={{ backgroundColor: '#f8fafc', border: '1.5px solid #cbd5e1', color: '#0f172a' }}
                       />
                     </div>
 
@@ -499,20 +512,23 @@ export default function ControlPanel() {
                     </button>
 
                     {/* Test Deliverability / Mail-Tester Score Tool */}
-                    <div className="pt-3 border-t border-[#557B83]/15 text-center">
+                    <div className="pt-3 border-t border-slate-200 text-center">
                       <button
                         type="button"
                         onClick={() => setShowTestMailModal(true)}
-                        className="text-[11px] text-[#39AEA9] hover:text-[#1D5C58] font-mono font-medium flex items-center justify-center gap-1.5 mx-auto transition-colors cursor-pointer"
+                        className="text-[11px] text-[#1D5C58] hover:text-[#39AEA9] font-mono font-bold flex items-center justify-center gap-1.5 mx-auto transition-colors cursor-pointer"
                       >
-                        <ShieldCheck className="w-3.5 h-3.5" /> Test Deliverability / Mail-Tester Score
+                        <ShieldCheck className="w-3.5 h-3.5 text-[#39AEA9]" /> Test Deliverability / Mail-Tester Score
                       </button>
                     </div>
                   </form>
                 ) : (
                   <form onSubmit={handleVerifyOtp} className="space-y-4 text-left">
                     <div>
-                      <label className="block text-xs font-mono text-[#557B83] font-bold mb-1.5 uppercase">
+                      <label 
+                        className="block text-xs font-mono font-bold mb-1.5 uppercase tracking-wider"
+                        style={{ color: '#334155' }}
+                      >
                         Enter 6-Digit Passkey
                       </label>
                       <input
@@ -523,7 +539,8 @@ export default function ControlPanel() {
                         placeholder="123456"
                         required
                         autoFocus
-                        className="w-full bg-[#F8FAFB] border border-[#557B83]/30 rounded-xl px-4 py-3 text-center text-2xl font-mono tracking-widest text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white transition-all shadow-xs"
+                        className="w-full rounded-xl px-4 py-3 text-center text-2xl font-mono font-bold tracking-widest focus:outline-none focus:ring-2 focus:ring-[#39AEA9] transition-all"
+                        style={{ backgroundColor: '#f8fafc', border: '1.5px solid #cbd5e1', color: '#0f172a' }}
                       />
                     </div>
 
@@ -531,7 +548,7 @@ export default function ControlPanel() {
                       <button
                         type="button"
                         onClick={() => setOtpStep('email')}
-                        className="w-1/3 py-3 rounded-xl border border-[#557B83]/20 bg-white text-[#557B83] hover:text-[#12181A] hover:bg-[#F8FAFB] text-xs font-mono font-bold transition-colors cursor-pointer"
+                        className="w-1/3 py-3 rounded-xl border border-slate-300 bg-white text-slate-700 hover:text-slate-900 hover:bg-slate-50 text-xs font-mono font-bold transition-colors cursor-pointer"
                       >
                         Back
                       </button>

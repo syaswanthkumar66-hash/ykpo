@@ -164,61 +164,68 @@ export function AuthModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-olive/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 bg-[#12181A]/70 backdrop-blur-md">
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-pistachio p-6 sm:p-8 md:p-10 rounded-2xl w-full max-w-md relative shadow-2xl border border-sage/30 max-h-[90vh] overflow-y-auto"
+        className="bg-white p-6 sm:p-8 md:p-10 rounded-3xl w-full max-w-md relative shadow-2xl border border-[#557B83]/20 max-h-[90vh] overflow-y-auto"
       >
         <button 
           onClick={closeAuthModal} 
-          className="absolute top-4 right-4 text-olive/60 hover:text-olive transition-colors"
+          className="absolute top-5 right-5 p-1.5 rounded-full hover:bg-[#557B83]/10 text-[#557B83] hover:text-[#12181A] transition-colors cursor-pointer"
         >
-          <X className="w-6 h-6" />
+          <X className="w-5 h-5" />
         </button>
         
         <div className="flex items-center gap-3 mb-8">
-          <img src="/favicon.svg" alt="YK Logo" className="w-8 h-8" />
-          <h2 className="font-display text-2xl font-bold text-olive uppercase tracking-widest">
-            {authStep === 'email' ? 'Welcome' : authStep === 'code' ? 'Verify' : 'Complete Setup'}
-          </h2>
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#39AEA9] to-[#557B83] p-[1px] shadow-sm">
+            <div className="w-full h-full bg-white rounded-2xl flex items-center justify-center text-[#12181A] font-bold text-sm font-display">
+              YK
+            </div>
+          </div>
+          <div>
+            <h2 className="font-display text-xl sm:text-2xl font-bold text-[#12181A]">
+              {authStep === 'email' ? 'Welcome Back' : authStep === 'code' ? 'Verify Identity' : 'Complete Setup'}
+            </h2>
+            <p className="text-xs text-[#557B83] font-mono">Passwordless Secure Authentication</p>
+          </div>
         </div>
         
         {authError && (
-          <div className="mb-6 p-3 bg-red-100 border border-red-200 text-red-700 text-sm rounded-2xl font-medium">
+          <div className="mb-6 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl font-medium">
             {authError}
           </div>
         )}
 
         {authStep === 'email' ? (
-          <form onSubmit={handleSendCodeLocal} className="space-y-6">
+          <form onSubmit={handleSendCodeLocal} className="space-y-5">
             <div>
-              <label className="block text-sm font-bold text-olive uppercase tracking-widest mb-2">Email Address</label>
+              <label className="block text-xs font-mono font-bold text-[#557B83] uppercase mb-1.5">Email Address</label>
               <input 
                 type="email" 
                 value={authEmail}
                 onChange={(e) => setAuthEmail(e.target.value)}
                 placeholder="you@example.com" 
                 required
-                className="w-full bg-white/60 border border-olive/20 rounded-2xl py-3 px-4 text-olive placeholder:text-olive/40 focus:outline-none focus:border-olive focus:bg-white transition-all font-medium"
+                className="w-full bg-[#F8FAFB] border border-[#557B83]/30 rounded-xl py-3 px-4 text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white transition-all text-sm font-medium shadow-xs"
               />
             </div>
             <button 
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center space-x-2 bg-olive text-pistachio px-6 py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-olive-dark transition-colors disabled:opacity-70"
+              className="w-full flex items-center justify-center space-x-2 bg-[#12181A] hover:bg-[#1D5C58] text-white px-6 py-3.5 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors disabled:opacity-70 cursor-pointer shadow-md hover:shadow-lg"
             >
-              <span>{isLoading ? 'Sending...' : 'Send Login Code'}</span>
-              {!isLoading && <ArrowRight className="w-4 h-4" />}
+              <span>{isLoading ? 'Sending Passkey...' : 'Send Login Code'}</span>
+              {!isLoading && <ArrowRight className="w-4 h-4 text-[#39AEA9]" />}
             </button>
-            <p className="text-xs text-olive/60 text-center font-medium mt-4">
-              We'll send a secure one-time code to your email.
+            <p className="text-xs text-[#557B83] text-center font-medium mt-3">
+              We'll send a secure one-time single-use code to your email.
             </p>
           </form>
         ) : authStep === 'code' ? (
-          <form onSubmit={handleVerifyCodeLocal} className="space-y-6">
+          <form onSubmit={handleVerifyCodeLocal} className="space-y-5">
             <div>
-              <label className="block text-sm font-bold text-olive uppercase tracking-widest mb-2">6-Digit Code</label>
+              <label className="block text-xs font-mono font-bold text-[#557B83] uppercase mb-1.5">6-Digit Passkey</label>
               <input 
                 type="text" 
                 value={authCode}
@@ -226,46 +233,46 @@ export function AuthModal() {
                 placeholder="123456" 
                 required
                 maxLength={6}
-                className="w-full bg-white/60 border border-olive/20 rounded-2xl py-3 px-4 text-olive placeholder:text-olive/40 focus:outline-none focus:border-olive focus:bg-white transition-all font-medium text-center text-2xl tracking-[0.5em]"
+                className="w-full bg-[#F8FAFB] border border-[#557B83]/30 rounded-xl py-3 px-4 text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white transition-all font-mono font-bold text-center text-2xl tracking-[0.4em] shadow-xs"
               />
             </div>
             <button 
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center space-x-2 bg-olive text-pistachio px-6 py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-olive-dark transition-colors disabled:opacity-70"
+              className="w-full flex items-center justify-center space-x-2 bg-[#12181A] hover:bg-[#1D5C58] text-white px-6 py-3.5 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors disabled:opacity-70 cursor-pointer shadow-md hover:shadow-lg"
             >
-              <span>{isLoading ? 'Verifying...' : 'Verify & Login'}</span>
+              <span>{isLoading ? 'Verifying Passkey...' : 'Verify & Sign In'}</span>
             </button>
             <button 
               type="button"
               onClick={() => { setAuthStep('email'); setAuthCode(''); setAuthName(''); setVerificationToken(''); setAuthError(''); }}
-              className="w-full text-xs text-olive/80 hover:text-olive font-bold uppercase tracking-widest text-center mt-4 transition-colors"
+              className="w-full text-xs text-[#557B83] hover:text-[#12181A] font-bold uppercase tracking-wider text-center mt-3 transition-colors cursor-pointer"
             >
-              Use a different email
+              ← Use a different email
             </button>
           </form>
         ) : (
-          <form onSubmit={handleCompleteSignup} className="space-y-6">
+          <form onSubmit={handleCompleteSignup} className="space-y-5">
             <div>
-              <label className="block text-sm font-bold text-olive uppercase tracking-widest mb-2">Your Name</label>
+              <label className="block text-xs font-mono font-bold text-[#557B83] uppercase mb-1.5">Your Full Name</label>
               <input 
                 type="text" 
                 value={authName}
                 onChange={(e) => setAuthName(e.target.value)}
-                placeholder="John Doe" 
+                placeholder="Yaswanth Kumar" 
                 required
-                className="w-full bg-white/60 border border-olive/20 rounded-2xl py-3 px-4 text-olive placeholder:text-olive/40 focus:outline-none focus:border-olive focus:bg-white transition-all font-medium"
+                className="w-full bg-[#F8FAFB] border border-[#557B83]/30 rounded-xl py-3 px-4 text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white transition-all text-sm font-medium shadow-xs"
               />
             </div>
             <button 
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center space-x-2 bg-olive text-pistachio px-6 py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-olive-dark transition-colors disabled:opacity-70"
+              className="w-full flex items-center justify-center space-x-2 bg-[#12181A] hover:bg-[#1D5C58] text-white px-6 py-3.5 rounded-xl font-bold uppercase tracking-wider text-xs transition-colors disabled:opacity-70 cursor-pointer shadow-md hover:shadow-lg"
             >
-              <span>{isLoading ? 'Completing...' : 'Create Account'}</span>
+              <span>{isLoading ? 'Setting up Profile...' : 'Complete Registration'}</span>
             </button>
-            <p className="text-xs text-olive/60 text-center font-medium mt-4">
-              Just one last step to set up your profile!
+            <p className="text-xs text-[#557B83] text-center font-medium mt-3">
+              One last quick step to personalize your client account.
             </p>
           </form>
         )}
