@@ -70,8 +70,7 @@ export function Navbar() {
   const navLinks: NavItem[] = [
     { name: 'Home', path: '/' },
     { name: 'Projects & Case Studies', path: '/projects' },
-    { name: 'Services & Milestones', path: '/services', badge: 'PayU' },
-    { name: 'Contact', path: '/contact' },
+    { name: 'Contact & Hire', path: '/contact' },
   ];
 
   const isActive = (path: string) => {
@@ -139,30 +138,6 @@ export function Navbar() {
 
         {/* Action CTAs */}
         <div className="hidden lg:flex items-center gap-3">
-          {/* Push Notification Enable Bell Button */}
-          <button
-            onClick={handleEnablePush}
-            disabled={pushLoading || pushStatus === 'granted'}
-            title={pushStatus === 'granted' ? 'Web Push Active for Payment Alerts' : 'Enable Instant Payment & Status Notifications'}
-            className={`p-2.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
-              pushStatus === 'granted'
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
-                : 'bg-white/80 hover:bg-white text-[#12181A] border border-[#557B83]/20 hover:border-[#39AEA9]'
-            }`}
-          >
-            {pushStatus === 'granted' ? (
-              <>
-                <BellRing className="w-4 h-4 text-emerald-600 animate-bounce" />
-                <span className="text-[11px]">Alerts ON</span>
-              </>
-            ) : (
-              <>
-                <Bell className="w-4 h-4 text-[#39AEA9]" />
-                <span className="text-[11px]">Enable Alerts</span>
-              </>
-            )}
-          </button>
-
           {/* User Auth OTP Button */}
           {user ? (
             <div className="flex items-center gap-2">
@@ -188,11 +163,11 @@ export function Navbar() {
           )}
 
           <Link
-            to="/services"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#39AEA9] to-[#557B83] text-white hover:brightness-105 transition-all font-sans shadow-[0_3px_12px_rgba(57,174,169,0.25)]"
+            to="/control-panel"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] text-white hover:brightness-105 transition-all font-sans shadow-[0_3px_12px_rgba(57,174,169,0.25)]"
           >
             <CreditCard className="w-3.5 h-3.5" />
-            Milestone Pay
+            PayU Dashboard
           </Link>
         </div>
 
@@ -232,22 +207,13 @@ export function Navbar() {
             ))}
           </div>
 
-          <div className="pt-3 border-t border-[#557B83]/15 grid grid-cols-2 gap-2">
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                handleEnablePush();
-              }}
-              className="px-3 py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider bg-white border border-[#557B83]/20 text-[#12181A] flex items-center justify-center gap-1.5"
-            >
-              <Bell className="w-3.5 h-3.5 text-[#39AEA9]" /> Alerts {pushStatus === 'granted' ? 'ON' : 'OFF'}
-            </button>
+          <div className="pt-3 border-t border-[#557B83]/15">
             <Link
-              to="/services"
+              to="/control-panel"
               onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#39AEA9] to-[#557B83] text-white flex items-center justify-center gap-1"
+              className="w-full py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] text-white flex items-center justify-center gap-1.5"
             >
-              <CreditCard className="w-3.5 h-3.5" /> Milestones
+              <CreditCard className="w-3.5 h-3.5" /> PayU Dashboard
             </Link>
           </div>
         </div>

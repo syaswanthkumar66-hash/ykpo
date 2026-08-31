@@ -113,6 +113,58 @@ export default function ControlPanel() {
   const [testEmailResult, setTestEmailResult] = useState<any>(null);
   const [testEmailError, setTestEmailError] = useState<string | null>(null);
 
+  // PayU Push Notification Alert State
+  const [pushStatus, setPushStatus] = useState<'prompt' | 'granted' | 'denied'>('prompt');
+  const [pushSubscribing, setPushSubscribing] = useState(false);
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        setPushStatus('granted');
+      } else if (Notification.permission === 'denied') {
+        setPushStatus('denied');
+      } else {
+        setPushStatus('prompt');
+      }
+    }
+  }, []);
+
+  const handleEnablePushAlerts = async () => {
+    if (!('Notification' in window)) {
+      alert('Push notifications are not supported by this browser.');
+      return;
+    }
+    setPushSubscribing(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        setPushStatus('granted');
+        const sub = await subscribeToPush(true);
+        if (sub) {
+          await savePushSubscription(sub, adminEmailInput.trim() || 'syaswanthkumar2006@gmail.com');
+          
+          // Dispatch Server-side Web Push confirmation notification
+          await fetch('/api/push/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              subscription: sub,
+              title: '🔔 Payment Alerts Enabled',
+              body: 'Thanks for enabling notifications! You will now receive instant push alerts whenever a payment is received, failed, or updated.',
+              url: '/control-panel'
+            })
+          }).catch(console.error);
+        }
+      } else {
+        setPushStatus('denied');
+      }
+    } catch (err) {
+      console.error('Failed to enable push notifications:', err);
+    } finally {
+      setPushSubscribing(false);
+    }
+  };
+
   useEffect(() => {
     if (adminSessionToken) {
       setOtpStep('unlocked');
@@ -677,6 +729,21 @@ export default function ControlPanel() {
                         </button>
                       ))}
                     </div>
+
+                    {/* Subscribe Payment Alerts Button */}
+                    <button
+                      onClick={handleEnablePushAlerts}
+                      disabled={pushSubscribing || pushStatus === 'granted'}
+                      className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold transition-all cursor-pointer shadow-xs ${
+                        pushStatus === 'granted'
+                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+                          : 'bg-white hover:bg-emerald-50 text-[#12181A] hover:text-emerald-700 border border-[#557B83]/20 hover:border-emerald-400'
+                      }`}
+                      title={pushStatus === 'granted' ? 'Web Push Payment Alerts Active' : 'Subscribe to Instant Payment Alerts'}
+                    >
+                      <Bell className={`w-3.5 h-3.5 ${pushStatus === 'granted' ? 'text-emerald-600 animate-bounce' : 'text-[#39AEA9]'}`} />
+                      <span>{pushStatus === 'granted' ? 'Alerts Subscribed' : 'Subscribe Alerts'}</span>
+                    </button>
 
                     <button
                       onClick={handleExportCSV}

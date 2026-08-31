@@ -101,68 +101,81 @@ function HomePage() {
         </div>
       </section>
 
-      {/* 2. Featured Services & Milestone Commission (PayU Integrated) */}
+      {/* 2. Live ₹1 PayU & UPI Payment Sandbox Verification */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-[#557B83]/15">
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#39AEA9] mb-2 font-mono">
-              <Sparkles className="w-3.5 h-3.5" /> Client Engagements & Retainers
+              <Sparkles className="w-3.5 h-3.5" /> Real-Time Payment Testing Engine
             </div>
             <h2 className="text-3xl sm:text-4xl font-display font-bold text-[#12181A]">
-              Engineering Services & Milestone Contracts
+              ₹1 Live PayU & Direct UPI Gateway Sandbox
             </h2>
           </div>
           <Link
-            to="/services"
+            to="/control-panel"
             className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#39AEA9] hover:text-[#12181A] transition-colors"
           >
-            Explore All Services & Retainers <ArrowRight className="w-4 h-4" />
+            Open PayU Live Ledger <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {SERVICES.map((srv) => (
-            <div
-              key={srv.id}
-              className="glass-panel-interactive rounded-3xl p-6 sm:p-8 flex flex-col justify-between group"
-            >
-              <div>
-                <div className="flex items-center justify-between mb-4">
-                  <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#39AEA9]/15 text-[#1D5C58] border border-[#39AEA9]/30 font-mono">
-                    {srv.duration}
-                  </span>
-                  <span className="text-2xl font-display font-bold text-[#12181A]">
-                    ₹{srv.priceINR.toLocaleString('en-IN')}
-                  </span>
-                </div>
+        {/* ₹1 Test Showcase Card */}
+        <div className="glass-panel-interactive rounded-3xl p-8 sm:p-12 border-2 border-[#39AEA9]/30 bg-gradient-to-br from-white via-[#F4F8F7] to-[#E5EFC1]/20 shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-[#39AEA9]/10 rounded-full blur-3xl -z-10" />
 
-                <h3 className="text-xl font-display font-bold text-[#12181A] mb-2 group-hover:text-[#39AEA9] transition-colors">
-                  {srv.title}
-                </h3>
-                <p className="text-xs text-[#557B83] mb-6 leading-relaxed">
-                  {srv.description}
-                </p>
-
-                <div className="space-y-2 mb-6">
-                  {srv.features.slice(0, 3).map((feat, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-xs text-[#12181A]/85">
-                      <Check className="w-3.5 h-3.5 text-[#39AEA9] shrink-0 mt-0.5" />
-                      <span>{feat}</span>
-                    </div>
-                  ))}
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            <div className="lg:col-span-8 space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="px-3.5 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-[#39AEA9] text-white shadow-sm">
+                  ⚡ ₹1 Live Test
+                </span>
+                <span className="text-xs font-mono text-[#557B83] font-semibold">
+                  NPCI UPI Intent • Dynamic QR • SHA-512 Signed
+                </span>
               </div>
 
-              <div className="pt-4 border-t border-[#557B83]/15">
-                <Link
-                  to="/services"
-                  className="w-full py-3.5 rounded-2xl font-bold uppercase tracking-wider text-xs btn-turtle-dark flex items-center justify-center gap-2 shadow-md"
-                >
-                  <CreditCard className="w-3.5 h-3.5 text-[#E5EFC1]" /> Retain / Commission (PayU)
-                </Link>
+              <h3 className="text-2xl sm:text-3xl font-display font-extrabold text-[#12181A]">
+                Test Real-Time PayU Hosted Checkout & Background WebPush Notifications
+              </h3>
+
+              <p className="text-sm text-[#557B83] leading-relaxed">
+                Perform a live ₹1.00 transaction to test seamless payment gateway redirection, bank authorization, instant Supabase ledger persistence, and server-dispatched Web Push notification alerts.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 text-xs text-[#12181A]/90 font-mono">
+                <div className="flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#39AEA9]" />
+                  <span>Real-time ₹1.00 PayU Gateway</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#39AEA9]" />
+                  <span>Reverse SHA-512 Verification</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#39AEA9]" />
+                  <span>Live Supabase Ledger Sync</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5 text-[#39AEA9]" />
+                  <span>Instant Server WebPush Notification</span>
+                </div>
               </div>
             </div>
-          ))}
+
+            <div className="lg:col-span-4 flex flex-col items-center justify-center p-6 rounded-2xl bg-white border border-[#557B83]/20 shadow-md text-center space-y-4">
+              <span className="text-xs font-mono uppercase tracking-wider text-[#557B83]">Transaction Price</span>
+              <div className="text-5xl font-display font-extrabold text-[#1D5C58]">
+                ₹1<span className="text-xl font-normal text-[#557B83]">.00</span>
+              </div>
+              <Link
+                to="/services"
+                className="w-full py-4 rounded-xl font-bold uppercase tracking-wider text-xs bg-gradient-to-r from-[#1D5C58] via-[#39AEA9] to-[#557B83] text-white hover:brightness-105 transition-all shadow-lg flex items-center justify-center gap-2 font-mono"
+              >
+                <CreditCard className="w-4 h-4" /> Start ₹1 Live PayU Checkout
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
