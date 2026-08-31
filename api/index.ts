@@ -212,8 +212,8 @@ app.post('/api/auth/send-code', async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   try {
-    const senderEmail = process.env.RESEND_FROM_EMAIL || 'YK Yash <auth@verify.ykyash.in>';
-    const { data, error } = await resend.emails.send({
+    let senderEmail = process.env.RESEND_FROM_EMAIL || 'YK Yash <auth@verify.ykyash.in>';
+    let { data, error } = await resend.emails.send({
       from: senderEmail,
       to: email,
       subject: 'Your YK Login Code',
@@ -286,7 +286,7 @@ app.post('/api/auth/send-code', async (req, res) => {
                       This code will expire in 10 minutes.<br />
                       Didn't request this code? You can safely ignore this email.<br /><br />
                       <a
-                        href="mailto: support@ykyash.in?subject=unsubscribe"
+                        href="mailto:support@ykyash.in?subject=unsubscribe"
                         style="color: #888888; text-decoration: underline;"
                         >Unsubscribe</a
                       >
@@ -303,6 +303,26 @@ app.post('/api/auth/send-code', async (req, res) => {
 </html>
       `
     });
+
+    // Automatic fallback: if custom domain is not yet verified on Resend, retry with onboarding@resend.dev
+    if (error && error.message && (error.message.includes('domain') || error.message.includes('verify') || error.message.includes('not verified'))) {
+      console.warn('Resend custom domain not verified, falling back to onboarding@resend.dev');
+      const fallbackResult = await resend.emails.send({
+        from: 'YK Yash <onboarding@resend.dev>',
+        to: email,
+        subject: 'Your YK Login Code',
+        html: `
+<div style="font-family: sans-serif; padding: 20px; color: #111;">
+  <h2>YK Yash Security Code</h2>
+  <p>Your one-time login passkey is:</p>
+  <div style="font-size: 32px; font-weight: bold; letter-spacing: 6px; padding: 16px; background: #f4f4f4; border-radius: 8px; text-align: center; margin: 16px 0;">${otp}</div>
+  <p style="font-size: 12px; color: #666;">Expires in 10 minutes.</p>
+</div>
+        `
+      });
+      error = fallbackResult.error;
+      data = fallbackResult.data;
+    }
 
     if (error) {
       console.error('Resend API Error:', error);
@@ -1193,14 +1213,26 @@ app.post('/api/admin/payu-auth/request-otp', async (req, res) => {
       return res.status(500).json({ error: 'Email template failed deliverability security check.' });
     }
 
-    // 2. DISPATCH VIA RESEND
+    // 2. DISPATCH VIA RESEND (with automatic fallback to onboarding@resend.dev)
     const resend = new Resend(apiKey);
-    const { data: sendResult, error: sendError } = await resend.emails.send({
+    let { data: sendResult, error: sendError } = await resend.emails.send({
       from: senderAddress,
       to: email,
       subject: emailSubject,
       html: emailHtml
     });
+
+    if (sendError && sendError.message && (sendError.message.includes('domain') || sendError.message.includes('verify') || sendError.message.includes('not verified'))) {
+      console.warn('Custom domain unverified on Resend. Falling back to onboarding@resend.dev for Admin OTP.');
+      const fallbackResult = await resend.emails.send({
+        from: 'YK Yash <onboarding@resend.dev>',
+        to: email,
+        subject: emailSubject,
+        html: emailHtml
+      });
+      sendError = fallbackResult.error;
+      sendResult = fallbackResult.data;
+    }
 
     if (sendError) {
       console.error('Resend Dispatch Error:', sendError);
@@ -1304,14 +1336,26 @@ app.post('/api/admin/payu-auth/test-email', async (req, res) => {
       html: emailHtml
     });
 
-    // 2. Dispatch via Resend
+    // 2. Dispatch via Resend (with auto fallback)
     const resend = new Resend(apiKey);
-    const { data: sendResult, error: sendError } = await resend.emails.send({
+    let { data: sendResult, error: sendError } = await resend.emails.send({
       from: senderAddress,
       to: targetEmail,
       subject: emailSubject,
       html: emailHtml
     });
+
+    if (sendError && sendError.message && (sendError.message.includes('domain') || sendError.message.includes('verify') || sendError.message.includes('not verified'))) {
+      console.warn('Custom domain unverified on Resend. Falling back to onboarding@resend.dev for Test Email.');
+      const fallbackResult = await resend.emails.send({
+        from: 'YK Yash <onboarding@resend.dev>',
+        to: targetEmail,
+        subject: emailSubject,
+        html: emailHtml
+      });
+      sendError = fallbackResult.error;
+      sendResult = fallbackResult.data;
+    }
 
     if (sendError) {
       console.error('Test Email Dispatch Error:', sendError);
