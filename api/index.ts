@@ -1025,10 +1025,11 @@ app.all('/api/payu/failure', async (req, res) => {
 
 /**
  * PayU Webhook Handler (Asynchronous Server-to-Server Event Listener)
+ * Supports both /api/payu/webhook and /payu/webhook for Vercel serverless compatibility
  * Supports all PayU event formats: JSON payloads, URL-encoded webhook posts, dispute/refund events, and test pings
  * Reference: https://docs.payu.in/docs/webhook-events-and-sample-payloads
  */
-app.all('/api/payu/webhook', async (req, res) => {
+const handlePayUWebhook = async (req: express.Request, res: express.Response) => {
   try {
     const payload = { ...req.query, ...req.body };
     const txnid = payload.txnid || payload.txn_id || payload.transaction_id || payload.id || payload.merchantTransactionId || payload.cb_id || null;
@@ -1105,7 +1106,10 @@ app.all('/api/payu/webhook', async (req, res) => {
     // Return 200 with error acknowledgement to prevent PayU dashboard retry alerts during initial test
     return res.status(200).json({ status: 'received_with_notice', error: err.message });
   }
-});
+};
+
+app.all('/api/payu/webhook', handlePayUWebhook);
+app.all('/payu/webhook', handlePayUWebhook);
 
 // Admin OTP Rate Limiting Map
 const adminOtpRateLimitMap = new Map<string, number>();
