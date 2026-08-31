@@ -1114,6 +1114,69 @@ function PushPanel() {
   const [url, setUrl] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
+  const [pushStatus, setPushStatus] = useState<'prompt' | 'granted' | 'denied'>('prompt');
+  const [subscribing, setSubscribing] = useState(false);
+  const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        setPushStatus('granted');
+      } else if (Notification.permission === 'denied') {
+        setPushStatus('denied');
+      } else {
+        setPushStatus('prompt');
+      }
+    }
+
+    if (supabase) {
+      supabase.from('push_subscriptions').select('id', { count: 'exact', head: true }).then(({ count }) => {
+        if (count !== null) setSubscriberCount(count);
+      });
+    }
+  }, []);
+
+  const handleSubscribeDevice = async () => {
+    if (!('Notification' in window)) {
+      alert('Push notifications are not supported in this browser.');
+      return;
+    }
+    setSubscribing(true);
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted') {
+        setPushStatus('granted');
+        const sub = await subscribeToPush(true);
+        if (sub) {
+          await savePushSubscription(sub, 'contact@ykyash.in');
+          // Trigger instant server-side push notification
+          await fetch('/api/push/send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              subscription: sub,
+              title: '🔔 Push Alerts Active',
+              body: 'Thanks for subscribing! This device will now receive instant push notifications whenever a payment or system event occurs.',
+              url: '/control-panel'
+            })
+          }).catch(console.error);
+
+          // Update count
+          if (supabase) {
+            supabase.from('push_subscriptions').select('id', { count: 'exact', head: true }).then(({ count }) => {
+              if (count !== null) setSubscriberCount(count);
+            });
+          }
+        }
+      } else {
+        setPushStatus('denied');
+      }
+    } catch (err) {
+      console.error('Subscription error:', err);
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   const sendPush = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1171,15 +1234,51 @@ function PushPanel() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <div className="bg-white border border-[#557B83]/20 rounded-2xl p-6 text-center shadow-xs">
-        <div className="w-12 h-12 rounded-2xl bg-[#39AEA9]/10 text-[#39AEA9] flex items-center justify-center mx-auto mb-3">
-          <Bell className="w-6 h-6" />
+      
+      {/* Device Subscription & Status Card */}
+      <div className="bg-white border border-[#557B83]/20 rounded-2xl p-6 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5 text-left">
+          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-sm ${
+            pushStatus === 'granted' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-[#39AEA9]/10 text-[#39AEA9]'
+          }`}>
+            <Bell className={`w-6 h-6 ${pushStatus === 'granted' ? 'animate-bounce' : ''}`} />
+          </div>
+          <div>
+            <h3 className="font-bold font-display text-base text-[#12181A] flex items-center gap-2">
+              Payment & Broadcast Alerts
+              {pushStatus === 'granted' && (
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800">
+                  ACTIVE
+                </span>
+              )}
+            </h3>
+            <p className="text-xs text-[#557B83]">
+              {pushStatus === 'granted' 
+                ? `This device is subscribed to real-time PayU payment & webhook alerts (${subscriberCount ?? 1} total subscribers).`
+                : 'Subscribe this browser device to receive instant notifications on transactions.'}
+            </p>
+          </div>
         </div>
-        <h2 className="text-xl font-bold font-display text-[#12181A]">Broadcast an Update</h2>
-        <p className="text-[#557B83] text-xs mt-1">Send a web push notification directly to subscribed devices.</p>
+
+        <button
+          onClick={handleSubscribeDevice}
+          disabled={subscribing || pushStatus === 'granted'}
+          className={`px-4 py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs whitespace-nowrap ${
+            pushStatus === 'granted'
+              ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+              : 'bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] text-white hover:brightness-105 shadow-md'
+          }`}
+        >
+          {subscribing ? 'Subscribing...' : pushStatus === 'granted' ? '✓ Alerts Subscribed' : '🔔 Subscribe Device'}
+        </button>
       </div>
 
+      {/* Broadcast Form */}
       <form onSubmit={sendPush} className="space-y-4 bg-white border border-[#557B83]/20 p-6 rounded-2xl shadow-xs">
+        <div className="border-b border-[#557B83]/15 pb-3">
+          <h2 className="text-lg font-bold font-display text-[#12181A]">Broadcast a Push Message</h2>
+          <p className="text-[#557B83] text-xs">Dispatch a custom WebPush notification to all registered admin and subscriber devices.</p>
+        </div>
         <div>
           <label className="block text-xs font-mono font-bold text-[#557B83] uppercase mb-2">Notification Title</label>
           <input 
