@@ -1260,17 +1260,54 @@ function PushPanel() {
           </div>
         </div>
 
-        <button
-          onClick={handleSubscribeDevice}
-          disabled={subscribing || pushStatus === 'granted'}
-          className={`px-4 py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs whitespace-nowrap ${
-            pushStatus === 'granted'
-              ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
-              : 'bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] text-white hover:brightness-105 shadow-md'
-          }`}
-        >
-          {subscribing ? 'Subscribing...' : pushStatus === 'granted' ? '✓ Alerts Subscribed' : '🔔 Subscribe Device'}
-        </button>
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          {/* 1-Click Self Test Push Button */}
+          {pushStatus === 'granted' && (
+            <button
+              onClick={async () => {
+                setSubscribing(true);
+                try {
+                  const sub = await subscribeToPush(false);
+                  if (sub) {
+                    await fetch('/api/push/send', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        subscription: sub,
+                        title: '✅ Payment Received: ₹1.00',
+                        body: 'Payer: S. Yaswanth Kumar | Product: ⚡ ₹1 Live Sandbox Test | TXN: YKH' + Date.now().toString().slice(-8),
+                        url: '/control-panel'
+                      })
+                    });
+                    setStatus('success');
+                    setStatusMessage('Self-test payment push sent! Check your notification center.');
+                  }
+                } catch (e: any) {
+                  setStatus('error');
+                  setStatusMessage(e.message || 'Self-test push failed');
+                } finally {
+                  setSubscribing(false);
+                }
+              }}
+              disabled={subscribing}
+              className="px-3.5 py-2.5 rounded-xl font-mono text-xs font-bold border border-[#39AEA9]/30 bg-[#39AEA9]/10 text-[#1D5C58] hover:bg-[#39AEA9]/20 transition-all cursor-pointer whitespace-nowrap"
+            >
+              ⚡ Self-Test Payment Push
+            </button>
+          )}
+
+          <button
+            onClick={handleSubscribeDevice}
+            disabled={subscribing || pushStatus === 'granted'}
+            className={`px-4 py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all cursor-pointer shadow-xs whitespace-nowrap ${
+              pushStatus === 'granted'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+                : 'bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] text-white hover:brightness-105 shadow-md'
+            }`}
+          >
+            {subscribing ? 'Subscribing...' : pushStatus === 'granted' ? '✓ Alerts Subscribed' : '🔔 Subscribe Device'}
+          </button>
+        </div>
       </div>
 
       {/* Broadcast Form */}
