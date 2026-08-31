@@ -1031,16 +1031,20 @@ app.all('/api/payu/failure', async (req, res) => {
  */
 const handlePayUWebhook = async (req: express.Request, res: express.Response) => {
   try {
-    const payload = { ...req.query, ...req.body };
-    const txnid = payload.txnid || payload.txn_id || payload.transaction_id || payload.id || payload.merchantTransactionId || payload.cb_id || null;
-    const status = payload.status || payload.cb_status || payload.event || payload.action || 'received';
-    const amount = payload.amount || payload.cb_amount || payload.net_amount_debit || '0';
+    const rawBody = req.body || {};
+    // PayU sends data in either req.body directly, req.body.event_payload, req.body.data, or req.query
+    const eventData = rawBody.event_payload || rawBody.data || rawBody.payload || {};
+    const payload = { ...req.query, ...rawBody, ...eventData };
+
+    const txnid = payload.txnid || payload.txn_id || payload.transaction_id || payload.merchantTransactionId || payload.id || payload.cb_id || null;
+    const status = payload.status || payload.cb_status || payload.event || payload.action || rawBody.event_type || 'received';
+    const amount = payload.amount || payload.net_amount_debit || payload.cb_amount || '0';
     const productinfo = payload.productinfo || payload.product_info || payload.description || 'PayU Transaction';
-    const firstname = payload.firstname || payload.first_name || payload.customer_name || 'Customer';
+    const firstname = payload.firstname || payload.first_name || payload.customer_name || payload.name || 'Customer';
     const email = payload.email || payload.customer_email || '';
     const hash = payload.hash || payload.signature || null;
-    const bank_ref_num = payload.bank_ref_num || payload.bank_reference || payload.bankRefNum || payload.mihpayid || null;
-    const mihpayid = payload.mihpayid || payload.payuMoneyId || payload.payu_money_id || null;
+    const bank_ref_num = payload.bank_ref_num || payload.bank_ref_no || payload.bank_reference || payload.bankRefNum || payload.mihpayid || null;
+    const mihpayid = payload.mihpayid || payload.payuMoneyId || payload.payu_money_id || rawBody.request_identifier || null;
     const additionalCharges = payload.additionalCharges || payload.additional_charges || null;
     const udf1 = payload.udf1 || "";
     const udf2 = payload.udf2 || "";
