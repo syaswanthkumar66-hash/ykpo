@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
-import { subscribeToPush, savePushSubscription } from '../utils/push';
+import { subscribeToPush, savePushSubscription, checkDeviceSubscriptionStatus } from '../utils/push';
 import { 
   ArrowLeft, 
   User, 
@@ -1179,6 +1179,7 @@ function PushPanel() {
   const [subscriberCount, setSubscriberCount] = useState<number | null>(null);
 
   useEffect(() => {
+    // 1. Initial Permission Check
     if ('Notification' in window) {
       if (Notification.permission === 'granted') {
         setPushStatus('granted');
@@ -1189,6 +1190,14 @@ function PushPanel() {
       }
     }
 
+    // 2. Auto-Check Encrypted Cookie & Supabase Status
+    checkDeviceSubscriptionStatus().then(res => {
+      if (res.isSubscribed) {
+        setPushStatus('granted');
+      }
+    }).catch(console.warn);
+
+    // 3. Live Subscriber Counter
     if (supabase) {
       supabase.from('push_subscriptions').select('id', { count: 'exact', head: true }).then(({ count }) => {
         if (count !== null) setSubscriberCount(count);
