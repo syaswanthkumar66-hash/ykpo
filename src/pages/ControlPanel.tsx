@@ -867,13 +867,23 @@ export default function ControlPanel() {
                       </form>
 
                       {testEmailError && (
-                        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-                          <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-                          <span>{testEmailError}</span>
+                        <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs space-y-2 text-left">
+                          <div className="flex items-center gap-2 font-bold text-red-800">
+                            <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                            <span>Dispatch Failed</span>
+                          </div>
+                          <p className="text-[11px] leading-relaxed text-red-700 font-sans">
+                            {testEmailError}
+                          </p>
+                          {testEmailResult?.details?.helpHint && (
+                            <div className="p-2.5 rounded-xl bg-white border border-red-200 text-[11px] font-mono text-slate-800">
+                              <strong>💡 Diagnosis:</strong> {testEmailResult.details.helpHint}
+                            </div>
+                          )}
                         </div>
                       )}
 
-                      {testEmailResult && (
+                      {testEmailResult && testEmailResult.success && (
                         <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 space-y-2 text-xs">
                           <div className="flex items-center gap-2 font-bold text-sm text-emerald-900">
                             <CheckCircle2 className="w-4 h-4 text-emerald-600" />
@@ -882,6 +892,7 @@ export default function ControlPanel() {
                           <div className="text-[11px] text-[#12181A] space-y-1">
                             <div>• <strong>Internal Spam Score:</strong> {testEmailResult.spamAudit?.score} / 10.0 (Safe threshold &lt; 2.0)</div>
                             <div>• <strong>Delivered To:</strong> {testEmailResult.deliveredTo}</div>
+                            <div>• <strong>Sender Address Used:</strong> {testEmailResult.usedSender || 'Resend Default'}</div>
                             {testEmailResult.emailId && <div>• <strong>Resend Message ID:</strong> {testEmailResult.emailId}</div>}
                           </div>
                           <p className="text-[10px] text-emerald-700 pt-1 font-medium">

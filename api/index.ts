@@ -1336,45 +1336,73 @@ app.post('/api/admin/payu-auth/test-email', async (req, res) => {
       html: emailHtml
     });
 
-    // 2. Dispatch via Resend (with auto fallback)
+    // 2. Dispatch via Resend (with multi-tier auto fallback)
     const resend = new Resend(apiKey);
-    let { data: sendResult, error: sendError } = await resend.emails.send({
+    let attemptedSenders = [senderAddress];
+    let sendResult: any = null;
+    let sendError: any = null;
+
+    const res1 = await resend.emails.send({
       from: senderAddress,
       to: targetEmail,
       subject: emailSubject,
       html: emailHtml
     });
+    sendResult = res1.data;
+    sendError = res1.error;
 
-    if (sendError && sendError.message && (sendError.message.includes('domain') || sendError.message.includes('verify') || sendError.message.includes('not verified'))) {
-      console.warn('Custom domain unverified on Resend. Falling back to onboarding@resend.dev for Test Email.');
-      const fallbackResult = await resend.emails.send({
+    // If first attempt failed, try with sandbox fallback
+    if (sendError && senderAddress !== 'YK Yash <onboarding@resend.dev>') {
+      attemptedSenders.push('YK Yash <onboarding@resend.dev>');
+      console.warn(`[Mail Dispatch] First attempt with "${senderAddress}" failed: ${sendError.message}. Retrying with sandbox sender "onboarding@resend.dev"...`);
+      
+      const res2 = await resend.emails.send({
         from: 'YK Yash <onboarding@resend.dev>',
         to: targetEmail,
         subject: emailSubject,
         html: emailHtml
       });
-      sendError = fallbackResult.error;
-      sendResult = fallbackResult.data;
+      if (!res2.error) {
+        sendError = null;
+        sendResult = res2.data;
+      } else {
+        sendError = res2.error;
+      }
     }
 
     if (sendError) {
-      console.error('Test Email Dispatch Error:', sendError);
-      return res.status(400).json({ error: sendError.message || 'Failed to dispatch test email.' });
+      console.error('Test Email Dispatch Error Details:', JSON.stringify(sendError));
+      return res.status(400).json({ 
+        success: false,
+        error: sendError.message || 'Resend rejected the dispatch request.',
+        details: {
+          rootCause: sendError.name || 'ResendApiError',
+          message: sendError.message,
+          statusCode: sendError.statusCode || 400,
+          attemptedSenders,
+          targetEmail,
+          helpHint: sendError.message?.includes('only send testing emails to your own email address')
+            ? 'Resend Sandbox Restriction: In sandbox mode (onboarding@resend.dev), Resend only allows sending to the email address registered on your Resend account. To send to any recipient or mail-tester, verify a custom domain in your Resend Dashboard.'
+            : sendError.message?.includes('API key')
+            ? 'Invalid or missing RESEND_API_KEY. Please verify the key in your environment variables.'
+            : 'Check Resend Dashboard -> Logs for full delivery audit.'
+        }
+      });
     }
 
     return res.json({
       success: true,
       deliveredTo: targetEmail,
       emailId: sendResult?.id || null,
+      usedSender: attemptedSenders[attemptedSenders.length - 1],
       spamAudit: {
         score: spamAudit.score,
         isSafe: spamAudit.isSafe,
         rating: spamAudit.score < 1.0 ? 'EXCELLENT (10/10 Deliverability)' : 'GOOD',
         issues: spamAudit.issues
       },
-      message: `Test email successfully sent to ${targetEmail}. Check your mailbox / mail-tester score!`
+      message: `Test email successfully sent to ${targetEmail} via Resend. Check your mailbox / mail-tester score!`
     });
-
   } catch (error: any) {
     console.error('Test Email Error:', error);
     return res.status(500).json({ error: error.message || 'Failed to process test email' });
