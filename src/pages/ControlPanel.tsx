@@ -641,6 +641,66 @@ export default function ControlPanel() {
             ) : (
               /* Unlocked PayU Transactions Dashboard */
               <div className="space-y-6">
+
+                {/* ₹1 Live PayU & Direct UPI Gateway Sandbox Card (Dedicated Control Panel Test Engine) */}
+                <div className="bg-white border-2 border-[#39AEA9]/30 rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#39AEA9] animate-ping" />
+                      <h2 className="text-xl sm:text-2xl font-display font-extrabold text-[#12181A]">
+                        ₹1 Live PayU & Direct UPI Gateway Sandbox
+                      </h2>
+                    </div>
+                    <span className="text-xs font-mono text-[#557B83]">
+                      NPCI UPI Intent • Dynamic QR • SHA-512 Signed
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    <div className="lg:col-span-8 space-y-3">
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-mono font-bold uppercase tracking-wider bg-[#39AEA9]/15 text-[#1D5C58] border border-[#39AEA9]/30">
+                        ⚡ ₹1 Live Test
+                      </div>
+                      <h3 className="text-lg sm:text-xl font-display font-bold text-[#12181A]">
+                        Test Real-Time PayU Hosted Checkout & Background WebPush Notifications
+                      </h3>
+                      <p className="text-xs text-[#557B83] leading-relaxed">
+                        Perform a live ₹1.00 transaction to test seamless payment gateway redirection, bank authorization, instant Supabase ledger persistence, and server-dispatched Web Push notification alerts.
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-mono text-[#12181A]/85 pt-1">
+                        <div className="flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-[#39AEA9]" />
+                          <span>Real-time ₹1.00 PayU Gateway</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-[#39AEA9]" />
+                          <span>Reverse SHA-512 Verification</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-[#39AEA9]" />
+                          <span>Live Supabase Ledger Sync</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-[#39AEA9]" />
+                          <span>Instant Server WebPush Notification</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="lg:col-span-4 flex flex-col items-center justify-center p-6 rounded-2xl bg-[#F8FAFB] border border-[#557B83]/15 text-center space-y-3">
+                      <span className="text-[11px] font-mono uppercase tracking-wider text-[#557B83]">Transaction Price</span>
+                      <div className="text-4xl font-display font-extrabold text-[#1D5C58]">
+                        ₹1<span className="text-lg font-normal text-[#557B83]">.00</span>
+                      </div>
+                      <Link
+                        to="/services"
+                        className="w-full py-3 px-4 rounded-xl font-bold uppercase tracking-wider text-xs bg-gradient-to-r from-[#1D5C58] via-[#39AEA9] to-[#557B83] text-white hover:brightness-105 transition-all shadow-md flex items-center justify-center gap-2 font-mono"
+                      >
+                        <CreditCard className="w-4 h-4" /> Start ₹1 Live PayU Checkout
+                      </Link>
+                    </div>
+                  </div>
+                </div>
                 
                 {/* 4 Analytics Metric Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
