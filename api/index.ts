@@ -1093,6 +1093,33 @@ const handlePayUWebhook = async (req: express.Request, res: express.Response) =>
           raw_payload: payload,
           updated_at: new Date().toISOString()
         }], { onConflict: 'txnid' });
+
+        // If payment is SUCCESSFUL, broadcast instant Web Push Notification to Admin and Customer devices
+        if (normalizedStatus === 'success') {
+          const formattedAmt = `₹${Number(amount || 0).toLocaleString('en-IN')}`;
+          const notifPayload = JSON.stringify({
+            title: `💰 Payment Received (${formattedAmt})`,
+            body: `Received from ${firstname || 'Customer'} for ${productinfo}. TXN: ${txnid}`,
+            url: '/control-panel'
+          });
+
+          // Fetch all active push subscribers from Supabase and broadcast
+          const { data: subscribers } = await supabaseServer.from('push_subscriptions').select('subscription');
+          if (subscribers && subscribers.length > 0) {
+            for (const subRow of subscribers) {
+              try {
+                const subObj = typeof subRow.subscription === 'string' ? JSON.parse(subRow.subscription) : subRow.subscription;
+                if (subObj && subObj.endpoint) {
+                  await webpush.sendNotification(subObj, notifPayload).catch((e: any) => {
+                    console.warn('[WebPush Webhook Notice]:', e.message);
+                  });
+                }
+              } catch (e) {
+                // ignore individual subscription parse error
+              }
+            }
+          }
+        }
       } catch (dbErr) {
         console.error('[Supabase Webhook Persistence Error]:', dbErr);
       }

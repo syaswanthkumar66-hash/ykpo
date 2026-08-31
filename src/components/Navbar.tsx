@@ -1,17 +1,65 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingBag, CreditCard } from 'lucide-react';
+import { Menu, X, CreditCard, Bell, BellRing, UserCheck, ShieldCheck } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { subscribeToPush, savePushSubscription } from '../utils/push';
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [pushStatus, setPushStatus] = useState<'prompt' | 'granted' | 'denied'>('prompt');
+  const [pushLoading, setPushLoading] = useState(false);
   const location = useLocation();
+  const { user, openAuthModal, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 15);
     window.addEventListener('scroll', handleScroll);
+
+    if ('Notification' in window) {
+      if (Notification.permission === 'granted') {
+        setPushStatus('granted');
+      } else if (Notification.permission === 'denied') {
+        setPushStatus('denied');
+      } else {
+        setPushStatus('prompt');
+      }
+    }
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleEnablePush = async () => {
+    if (!('Notification' in window)) {
+      alert('Push notifications are not supported in this browser.');
+      return;
+    }
+
+    setPushLoading(true);
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        setPushStatus('granted');
+        const sub = await subscribeToPush(true);
+        if (sub) {
+          await savePushSubscription(sub, user?.email);
+          // Show instant confirmation toast/alert
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Push Notifications Active 🔔', {
+              body: 'You will now receive instant push alerts whenever a payment or transaction is received!',
+              icon: '/vite.svg'
+            });
+          }
+        }
+      } else {
+        setPushStatus('denied');
+      }
+    } catch (err) {
+      console.error('Push permission error:', err);
+    } finally {
+      setPushLoading(false);
+    }
+  };
 
   interface NavItem {
     name: string;
@@ -91,13 +139,54 @@ export function Navbar() {
 
         {/* Action CTAs */}
         <div className="hidden lg:flex items-center gap-3">
-          <Link
-            to="/store"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/80 hover:bg-white border border-[#557B83]/20 text-[#12181A] hover:border-[#39AEA9] transition-all backdrop-blur-md shadow-sm"
+          {/* Push Notification Enable Bell Button */}
+          <button
+            onClick={handleEnablePush}
+            disabled={pushLoading || pushStatus === 'granted'}
+            title={pushStatus === 'granted' ? 'Web Push Active for Payment Alerts' : 'Enable Instant Payment & Status Notifications'}
+            className={`p-2.5 rounded-xl text-xs font-mono font-bold flex items-center gap-1.5 transition-all cursor-pointer shadow-sm ${
+              pushStatus === 'granted'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
+                : 'bg-white/80 hover:bg-white text-[#12181A] border border-[#557B83]/20 hover:border-[#39AEA9]'
+            }`}
           >
-            <ShoppingBag className="w-4 h-4 text-[#39AEA9]" />
-            Digital Store
-          </Link>
+            {pushStatus === 'granted' ? (
+              <>
+                <BellRing className="w-4 h-4 text-emerald-600 animate-bounce" />
+                <span className="text-[11px]">Alerts ON</span>
+              </>
+            ) : (
+              <>
+                <Bell className="w-4 h-4 text-[#39AEA9]" />
+                <span className="text-[11px]">Enable Alerts</span>
+              </>
+            )}
+          </button>
+
+          {/* User Auth OTP Button */}
+          {user ? (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-[#1D5C58] bg-[#E5EFC1]/60 px-3 py-1.5 rounded-xl border border-[#39AEA9]/20 font-bold flex items-center gap-1.5">
+                <UserCheck className="w-3.5 h-3.5 text-[#39AEA9]" />
+                {user.name || user.email.split('@')[0]}
+              </span>
+              <button
+                onClick={logout}
+                className="text-[11px] text-red-500 hover:text-red-700 font-mono underline cursor-pointer"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={openAuthModal}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/80 hover:bg-white border border-[#557B83]/20 text-[#12181A] hover:border-[#39AEA9] transition-all backdrop-blur-md shadow-sm cursor-pointer"
+            >
+              <ShieldCheck className="w-4 h-4 text-[#39AEA9]" />
+              Client Login
+            </button>
+          )}
+
           <Link
             to="/services"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#39AEA9] to-[#557B83] text-white hover:brightness-105 transition-all font-sans shadow-[0_3px_12px_rgba(57,174,169,0.25)]"
@@ -144,19 +233,21 @@ export function Navbar() {
           </div>
 
           <div className="pt-3 border-t border-[#557B83]/15 grid grid-cols-2 gap-2">
-            <Link
-              to="/store"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider bg-white border border-[#557B83]/20 text-[#12181A]"
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                handleEnablePush();
+              }}
+              className="px-3 py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider bg-white border border-[#557B83]/20 text-[#12181A] flex items-center justify-center gap-1.5"
             >
-              Digital Store
-            </Link>
+              <Bell className="w-3.5 h-3.5 text-[#39AEA9]" /> Alerts {pushStatus === 'granted' ? 'ON' : 'OFF'}
+            </button>
             <Link
               to="/services"
               onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#39AEA9] to-[#557B83] text-white"
+              className="px-3 py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#39AEA9] to-[#557B83] text-white flex items-center justify-center gap-1"
             >
-              Milestones
+              <CreditCard className="w-3.5 h-3.5" /> Milestones
             </Link>
           </div>
         </div>
