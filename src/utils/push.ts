@@ -19,27 +19,39 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export async function savePushSubscription(subscription: PushSubscription, email?: string) {
   try {
-    const subStr = JSON.stringify(subscription);
-    if (supabase) {
-      const { data: existing } = await supabase
+    const rawSubJson = subscription.toJSON ? subscription.toJSON() : JSON.parse(JSON.stringify(subscription));
+    const endpoint = subscription.endpoint || rawSubJson.endpoint;
+
+    if (supabase && endpoint) {
+      const { data: existing, error: selectErr } = await supabase
         .from('push_subscriptions')
         .select('id')
-        .eq('endpoint', subscription.endpoint)
+        .eq('endpoint', endpoint)
         .maybeSingle();
 
+      if (selectErr) {
+        console.warn('Supabase select note:', selectErr.message);
+      }
+
       if (!existing) {
-        await supabase.from('push_subscriptions').insert([{
-          endpoint: subscription.endpoint,
-          subscription: subscription,
-          email: email || null,
+        const { error: insertErr } = await supabase.from('push_subscriptions').insert([{
+          endpoint: endpoint,
+          subscription: rawSubJson,
+          email: email || 'contact@ykyash.in',
           user_agent: navigator.userAgent,
           created_at: new Date().toISOString()
         }]);
-      } else if (email) {
-        await supabase
+        if (insertErr) console.error('Error inserting push subscription:', insertErr);
+      } else {
+        const { error: updateErr } = await supabase
           .from('push_subscriptions')
-          .update({ email, subscription: subscription })
-          .eq('endpoint', subscription.endpoint);
+          .update({
+            email: email || 'contact@ykyash.in',
+            subscription: rawSubJson,
+            user_agent: navigator.userAgent
+          })
+          .eq('endpoint', endpoint);
+        if (updateErr) console.error('Error updating push subscription:', updateErr);
       }
     }
   } catch (error) {
