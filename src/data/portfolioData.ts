@@ -4,116 +4,24 @@ export const DIGITAL_PRODUCTS: DigitalProduct[] = [
   {
     id: 'prod-test-rupee',
     slug: 'test-rupee-transaction',
-    title: '₹1 Live Direct UPI Test Sandbox',
-    tagline: 'Test real-time direct UPI payment, dynamic NPCI QR scanning, and instant digital receipt verification for ₹1.',
-    description: 'A dedicated 1-Rupee live transaction sandbox designed to verify direct peer-to-merchant UPI payments, dynamic NPCI UPI QR code generation, instant deep link app launching (GPay, PhonePe, Paytm, BHIM, CRED), and instant digital license receipt generation.',
+    title: '₹1 Live Direct UPI & PayU Test Sandbox',
+    tagline: 'Test real-time PayU Hosted checkout, direct UPI intent, and instant payment verification for ₹1.',
+    description: 'A dedicated 1-Rupee live transaction sandbox designed to verify PayU Hosted checkout, dynamic UPI QR scanning, instant mobile app launching, and real-time webhook confirmation with reverse SHA-512 cryptographic verification.',
     priceINR: 1,
     category: 'testing',
-    badge: '⚡ ₹1 Live Test',
+    badge: '⚡ ₹1 Live Sandbox',
     fileSize: '120 KB (.zip)',
     version: 'v1.0.0',
     downloadFileName: 'ykyash-payment-sandbox-test.zip',
     features: [
-      'Real-time ₹1.00 Live Direct UPI Processing',
-      'Dynamic NPCI QR code scanning with PhonePe, GPay, Paytm, BHIM, CRED',
-      '1-Click Mobile UPI Deep Link Intent Dispatching',
-      'Instant Digital Certificate & Proof-of-Payment Receipt generation',
-      'Automatic Firestore Transaction Logging'
+      'Real-time ₹1.00 Live PayU Gateway & UPI Verification',
+      'Dynamic UPI QR code scanning (PhonePe, GPay, Paytm, BHIM, CRED)',
+      'Reverse SHA-512 Cryptographic Signature Validation',
+      'Instant Supabase Database Ledger Persistence',
+      'Real-Time Web Push Notification Dispatch'
     ],
-    techStack: ['Direct UPI', 'NPCI QR', 'Deep Links', 'Firestore'],
-    highlights: ['₹1.00 Real Payment', 'Direct UPI', 'Instant Receipt']
-  },
-  {
-    id: 'prod-fintech-ui',
-    slug: 'fintech-ui-template',
-    title: 'Premium Fintech UI & Analytics Dashboard Kit',
-    tagline: 'Modern, high-performance financial dashboard template built with React 19, Tailwind CSS, and Recharts.',
-    description: 'A production-grade frontend architecture featuring responsive dark-mode analytics, transaction ledgers, currency conversions, interactive stock/crypto charts, and secure checkout modals.',
-    priceINR: 499,
-    category: 'template',
-    badge: 'Bestseller',
-    fileSize: '4.2 MB (.zip)',
-    version: 'v2.4.0',
-    downloadFileName: 'ykyash-fintech-ui-kit-v2.4.zip',
-    features: [
-      '20+ Modular Dashboard Components & Metric Widgets',
-      'Secure Payment Gateway Checkout Drawer & Receipts',
-      'Interactive Recharts for Time-Series & Spending Analytics',
-      'Accessible WCAG AA Compliant Light & Dark Mode Palette',
-      'Full TypeScript definitions & Vite configuration',
-      'Commercial License with Lifetime Updates'
-    ],
-    techStack: ['React 19', 'TypeScript', 'Tailwind CSS', 'Recharts', 'Lucide Icons'],
-    highlights: ['Instant ZIP Download', 'Ready for Production', 'Full Source Code']
-  },
-  {
-    id: 'prod-esp32-iot',
-    slug: 'esp32-smart-home-firmware',
-    title: 'ESP32 Smart Home & Sensor Telemetry Suite',
-    tagline: 'Production-ready C++ FreeRTOS firmware with MQTT, WebSockets, and hardware schematics.',
-    description: 'Complete embedded firmware codebase for ESP32 and ESP8266 IoT nodes. Includes non-blocking sensor acquisition (DHT22, BMP280, MQ135), Wi-Fi auto-reconnect, dynamic web configuration portal, and secure MQTT telemetry pub/sub.',
-    priceINR: 799,
-    category: 'iot',
-    badge: 'Top Rated',
-    fileSize: '12.8 MB (.zip)',
-    version: 'v3.1.2',
-    downloadFileName: 'ykyash-esp32-iot-firmware-v3.1.zip',
-    features: [
-      'FreeRTOS Multi-Tasking Architecture (Core 0 & Core 1 separation)',
-      'Async Web Server with captive portal for Wi-Fi provisioning',
-      'Secure TLS MQTT Client for AWS IoT / HiveMQ / Mosquitto',
-      'Over-The-Air (OTA) firmware upgrade routines',
-      'Complete KiCad Circuit Schematics & Breadboard Wiring Diagrams',
-      'Sample React WebSocket Live Telemetry Dashboard'
-    ],
-    techStack: ['C++', 'FreeRTOS', 'ESP-IDF / Arduino', 'MQTT', 'WebSockets', 'KiCad'],
-    highlights: ['Tested on ESP32-WROOM-32', 'Zero-Freeze Watchdog', 'Schematics Included']
-  },
-  {
-    id: 'prod-nextjs-starter',
-    slug: 'nextjs-saas-starter',
-    title: 'Next.js 15 Full-Stack SaaS Boilerplate',
-    tagline: 'The ultimate production template for digital creators with Auth, Database, and Payment integration.',
-    description: 'Jumpstart your SaaS or digital goods storefront in days. Includes App Router architecture, Server Actions, PostgreSQL / Supabase schema, JWT & OTP authentication, and automated payment webhook listeners.',
-    priceINR: 1299,
-    category: 'web',
-    badge: 'Comprehensive',
-    fileSize: '8.6 MB (.zip)',
-    version: 'v1.8.0',
-    downloadFileName: 'ykyash-nextjs-saas-starter-v1.8.zip',
-    features: [
-      'Next.js 15 App Router & Server Actions architecture',
-      'Full Secure Payment Gateway Integration with Webhook Verification',
-      'Role-Based Access Control (Admin, Customer, Creator)',
-      'Automated Email Receipts & Magic Link Login with Resend',
-      'Optimized Tailwind CSS styling with smooth Motion transitions',
-      'Vercel & Docker ready one-click deployment configuration'
-    ],
-    techStack: ['Next.js 15', 'TypeScript', 'Node.js', 'PostgreSQL', 'Tailwind CSS', 'Payment API'],
-    highlights: ['Vercel Ready', 'Authentication Included', 'Webhook Verified']
-  },
-  {
-    id: 'prod-payment-suite',
-    slug: 'payment-integration-suite',
-    title: 'Node.js & React Payment Gateway Integration Suite',
-    tagline: 'Drop-in, battle-tested payment gateway module with cryptographic validation & instant digital receipts.',
-    description: 'Complete developer kit to integrate Indian online payments into any Express, Fastify, Next.js, or React web app. Eliminates hash mismatch errors, handles payment redirects, and generates printable PDF/HTML receipts.',
-    priceINR: 399,
-    category: 'backend',
-    badge: 'Developer Favorite',
-    fileSize: '2.1 MB (.zip)',
-    version: 'v2.0.1',
-    downloadFileName: 'ykyash-payment-integration-suite.zip',
-    features: [
-      'SHA-512 Cryptographic Signature & Webhook Response Validator',
-      'Express middleware for /api/payment/hash, /success, /failure',
-      'Seamless React checkout modal with UPI, Card, NetBanking simulation',
-      'Instant GST-ready and Simple digital receipt generator',
-      'Step-by-step payment gateway merchant onboarding checklist & KYC guide',
-      'Postman Collection with test payloads'
-    ],
-    techStack: ['Node.js', 'Express', 'TypeScript', 'Crypto', 'React'],
-    highlights: ['100% Tested', 'Zero Dependencies except Crypto', 'KYC Ready']
+    techStack: ['PayU Hosted', 'Direct UPI', 'SHA-512', 'Supabase', 'Web Push'],
+    highlights: ['₹1.00 Live Test', 'Instant Verification', 'Real-Time Webhook']
   }
 ];
 

@@ -94,10 +94,44 @@ export default function Services() {
           {/* Left Column: Service Catalog */}
           <div className="lg:col-span-7 space-y-6">
             <h2 className="text-xl font-display font-bold text-[#12181A] mb-4">
-              1. Select Service Tier or Custom Milestone
+              1. Select Service Tier, Retainer, or ₹1 Test Sandbox
             </h2>
 
-            <div className="space-y-4">
+            {/* ₹1 Live PayU & UPI Sandbox Card */}
+            <div
+              onClick={() => {
+                setIsCustom(true);
+                setCustomAmount('1');
+                setFormData(prev => ({ 
+                  ...prev, 
+                  productinfo: '₹1 Live PayU & Direct UPI Test Sandbox',
+                  milestoneTitle: '⚡ ₹1 Live Gateway Verification'
+                }));
+              }}
+              className={`p-6 rounded-3xl transition-all cursor-pointer border ${
+                isCustom && customAmount === '1'
+                  ? 'bg-white border-2 border-[#39AEA9] shadow-[0_10px_30px_rgba(57,174,169,0.18)]'
+                  : 'bg-gradient-to-r from-[#E5EFC1]/40 to-[#A2D5AB]/30 border-[#39AEA9]/30 hover:border-[#39AEA9]'
+              }`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#39AEA9] animate-ping" />
+                  <h3 className="font-display font-bold text-lg text-[#12181A]">
+                    ⚡ ₹1 Live PayU & Direct UPI Sandbox
+                  </h3>
+                </div>
+                <div className="text-right">
+                  <span className="font-display font-bold text-xl text-[#1D5C58]">₹1.00</span>
+                  <span className="text-[10px] text-[#39AEA9] block uppercase font-mono font-bold">Instant Test</span>
+                </div>
+              </div>
+              <p className="text-xs text-[#557B83] leading-relaxed">
+                Test real-time PayU Hosted checkout, direct UPI intent/QR scanning, reverse SHA-512 verification, Supabase transaction logging, and instant Web Push notification alerts for ₹1.
+              </p>
+            </div>
+
+            <div className="space-y-4 pt-2">
               {SERVICES.map((service) => {
                 const isSelected = !isCustom && selectedService.id === service.id;
                 return (
