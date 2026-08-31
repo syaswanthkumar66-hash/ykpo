@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { db } from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { supabase } from '../supabase';
 import { subscribeToPush, savePushSubscription, sendNotificationToUser } from '../utils/push';
 import { X, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -66,12 +65,18 @@ export function AuthModal() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Invalid code');
       
-      const userRef = doc(db, 'users', authEmail.toLowerCase());
-      const userSnap = await getDoc(userRef);
+      let existingUser = null;
+      if (supabase) {
+        const { data: userRow } = await supabase
+          .from('users')
+          .select('*')
+          .eq('email', authEmail.toLowerCase())
+          .maybeSingle();
+        existingUser = userRow;
+      }
 
-      if (userSnap.exists()) {
-        const userData = userSnap.data();
-        const finalName = userData.name || data.user?.name;
+      if (existingUser) {
+        const finalName = existingUser.name || data.user?.name;
         
         await login(authEmail, authCode, verificationToken, finalName);
         
@@ -125,35 +130,33 @@ export function AuthModal() {
     setAuthError('');
 
     try {
-      await setDoc(doc(db, 'users', authEmail.toLowerCase()), {
-        email: authEmail.toLowerCase(),
-        name: authName.trim(),
-        createdAt: new Date().toISOString()
-      });
+      if (supabase) {
+        await supabase.from('users').upsert([{
+          email: authEmail.toLowerCase(),
+          name: authName.trim(),
+          created_at: new Date().toISOString()
+        }]);
+      }
 
       if (tempToken) {
         const finalUser = { email: authEmail, name: authName.trim(), token: tempToken.token };
         localStorage.setItem('auth_token', tempToken.token);
         localStorage.setItem('auth_user', JSON.stringify(finalUser));
-        
-        // Use a dummy code and verification token since it's already verified and we set it manually, or re-verify?
-        // Wait, the AuthContext `login` expects API verify again. Let's just reload to update the context since we bypassed it manually here for signup.
-        if ('Notification' in window) {
-          if (Notification.permission === 'granted') {
-            try {
-              const subscription = await subscribeToPush(true);
-              if (subscription) {
-                localStorage.setItem('push_renew_v1', 'true');
-                await savePushSubscription(subscription, authEmail);
-                await sendNotificationToUser(authEmail, 'Signup Successful', `Welcome to the community, ${finalUser.name}!`, '/');
-              }
-            } catch (err) { console.error(err); }
-          }
+
+        if ('Notification' in window && Notification.permission === 'granted') {
+          try {
+            const subscription = await subscribeToPush(true);
+            if (subscription) {
+              localStorage.setItem('push_renew_v1', 'true');
+              await savePushSubscription(subscription, authEmail);
+              await sendNotificationToUser(authEmail, 'Signup Successful', `Welcome to the community, ${finalUser.name}!`, '/');
+            }
+          } catch (err) { console.error(err); }
         }
-        
-        window.location.reload(); 
       }
-    } catch(err: any) {
+      closeAuthModal();
+      window.location.reload();
+    } catch (err: any) {
       setAuthError(err.message || 'Failed to create account.');
     } finally {
       setIsLoading(false);

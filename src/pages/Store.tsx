@@ -3,11 +3,13 @@ import { ShoppingBag, Check, ShieldCheck, Sparkles, CreditCard, Zap, AlertCircle
 import { DIGITAL_PRODUCTS } from '../data/portfolioData';
 import { DigitalProduct } from '../types';
 import { Link } from 'react-router-dom';
-import PayUHostedCheckoutModal from '../components/payu/PayUHostedCheckoutModal';
+import { PayUHostedCheckoutModal } from '../components/payu/PayUHostedCheckoutModal';
+import { PayUCustomHostedModal } from '../components/payu/PayUCustomHostedModal';
 
 export default function Store() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [hostedProduct, setHostedProduct] = useState<DigitalProduct | null>(null);
+  const [customProduct, setCustomProduct] = useState<DigitalProduct | null>(null);
 
   const categories = [
     { id: 'all', label: 'All Digital Products' },
@@ -176,6 +178,13 @@ export default function Store() {
           isOpen={Boolean(hostedProduct)}
           onClose={() => setHostedProduct(null)}
           item={hostedProduct}
+        />
+
+        {/* PayU Custom Merchant-Hosted Modal */}
+        <PayUCustomHostedModal
+          isOpen={Boolean(customProduct)}
+          onClose={() => setCustomProduct(null)}
+          item={customProduct}
         />
 
       </div>

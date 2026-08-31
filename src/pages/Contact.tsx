@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Clock, Send, ShieldCheck, CheckCircle, MessageSquare, AlertCircle } from 'lucide-react';
 import { MERCHANT_KYC_DETAILS } from '../data/portfolioData';
-import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { supabase } from '../supabase';
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -26,12 +25,15 @@ export default function Contact() {
     setError(null);
 
     try {
-      if (db) {
-        await addDoc(collection(db, 'inquiries'), {
-          ...formData,
-          timestamp: new Date().toISOString(),
-          source: 'contact_page'
-        });
+      if (supabase) {
+        await supabase.from('inquiries').insert([{
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          source: 'contact_page',
+          created_at: new Date().toISOString()
+        }]);
       }
       setSubmitted(true);
       setFormData({ name: '', email: '', subject: '', message: '' });

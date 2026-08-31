@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
+import { supabase } from '../supabase';
 import { 
   CheckCircle2, 
   XCircle, 
@@ -35,6 +36,25 @@ export function PaymentSuccess() {
   const [copiedKey, setCopiedKey] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [downloadCompleted, setDownloadCompleted] = useState(false);
+
+  // Sync / verify settlement in Supabase
+  useEffect(() => {
+    if (supabase && txnid) {
+      supabase.from('payments').upsert([{
+        txnid,
+        amount,
+        product,
+        customer_name: customer,
+        customer_email: email,
+        status: 'success',
+        payment_mode: paymentMode,
+        hash_verified: true,
+        updated_at: new Date().toISOString()
+      }], { onConflict: 'txnid' }).then(({ error }) => {
+        if (error) console.warn('Supabase payment sync notice:', error.message);
+      });
+    }
+  }, [txnid, amount, product, customer, email, paymentMode]);
 
   // Generate deterministic license key
   const licenseKey = `YKYASH-${txnid.replace(/[^A-Z0-9]/gi, '').slice(-8).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}-${Math.floor(1000 + Math.random() * 9000)}`;

@@ -19,8 +19,7 @@ import {
   Clock
 } from 'lucide-react';
 import QRCode from 'qrcode';
-import { db } from '../../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { supabase } from '../../supabase';
 import { PayUDebugResponse } from './PayUDebugResponse';
 
 export interface PayUCustomItem {
@@ -349,24 +348,23 @@ export function PayUCustomHostedModal({
         udf3: customerPhone
       };
 
-      // Firestore logging
+      // Supabase logging
       try {
-        if (db) {
-          await addDoc(collection(db, 'inquiries'), {
-            name: customerName,
-            email: customerEmail,
-            phone: customerPhone,
+        if (supabase) {
+          await supabase.from('payments').insert([{
             txnid: uniqueTxnid,
-            productTitle: item.title,
-            priceINR: item.priceINR,
-            paymentMethod: `payu_custom_${activeTab}`,
+            amount: item.priceINR,
+            product: item.title,
+            customer_name: customerName.trim(),
+            customer_email: customerEmail.trim(),
+            customer_phone: customerPhone.replace(/\D/g, ''),
+            payment_mode: `payu_custom_${activeTab}`,
             status: 'initiated',
-            timestamp: new Date().toISOString(),
-            source: 'payu_custom_hosted'
-          });
+            created_at: new Date().toISOString()
+          }]);
         }
       } catch (dbErr) {
-        console.warn('Firestore order logging notice:', dbErr);
+        console.warn('Supabase order logging notice:', dbErr);
       }
 
       const response = await fetch('/api/payu/custom/initiate', {

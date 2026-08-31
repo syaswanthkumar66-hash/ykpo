@@ -7,8 +7,7 @@ import {
   Zap,
   Globe
 } from 'lucide-react';
-import { db } from '../../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { supabase } from '../../supabase';
 
 export interface PayUHostedCheckoutItem {
   id: string;
@@ -97,24 +96,23 @@ export function PayUHostedCheckoutModal({
         udf3: customerPhone
       };
 
-      // Optional database order log
+      // Record initiated order in Supabase
       try {
-        if (db) {
-          await addDoc(collection(db, 'inquiries'), {
-            name: customerName,
-            email: customerEmail,
-            phone: customerPhone,
+        if (supabase) {
+          await supabase.from('payments').insert([{
             txnid: uniqueTxnid,
-            productTitle: item.title,
-            priceINR: item.priceINR,
-            paymentMethod: 'payu_hosted_prebuilt',
+            amount: item.priceINR,
+            product: item.title,
+            customer_name: customerName.trim(),
+            customer_email: customerEmail.trim(),
+            customer_phone: customerPhone.replace(/\D/g, ''),
             status: 'initiated',
-            timestamp: new Date().toISOString(),
-            source: 'payu_hosted_gateway'
-          });
+            payment_mode: 'payu_hosted_prebuilt',
+            created_at: new Date().toISOString()
+          }]);
         }
       } catch (dbErr) {
-        console.warn('Firestore order logging notice:', dbErr);
+        console.warn('Supabase order logging notice:', dbErr);
       }
 
       // Call dedicated PayU Hosted initiation endpoint

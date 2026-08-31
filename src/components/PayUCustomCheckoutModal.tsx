@@ -16,8 +16,7 @@ import {
   LockKeyhole
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { db } from '../firebase';
-import { collection, addDoc } from 'firebase/firestore';
+import { supabase } from '../supabase';
 
 export interface PayUCheckoutItem {
   id: string;
@@ -108,24 +107,23 @@ export function PayUCustomCheckoutModal({
         udf3: customerPhone
       };
 
-      // Log checkout initiation to Firestore database
+      // Log checkout initiation to Supabase payments table
       try {
-        if (db) {
-          await addDoc(collection(db, 'inquiries'), {
-            name: customerName,
-            email: customerEmail,
-            phone: customerPhone,
+        if (supabase) {
+          await supabase.from('payments').insert([{
             txnid: uniqueTxnid,
-            productTitle: item.title,
-            priceINR: item.priceINR,
-            paymentMethod: 'payu_hosted_prebuilt',
+            amount: item.priceINR,
+            product: item.title,
+            customer_name: customerName.trim(),
+            customer_email: customerEmail.trim(),
+            customer_phone: customerPhone.replace(/\D/g, ''),
             status: 'initiated',
-            timestamp: new Date().toISOString(),
-            source: 'payu_hosted_gateway'
-          });
+            payment_mode: 'payu_custom_hosted',
+            created_at: new Date().toISOString()
+          }]);
         }
       } catch (dbErr) {
-        console.warn('Firestore order logging notice:', dbErr);
+        console.warn('Supabase order logging notice:', dbErr);
       }
 
       // Call backend endpoint to calculate SHA-512 hash and return PayU Hosted form payload

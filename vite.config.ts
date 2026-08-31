@@ -22,7 +22,7 @@ export default defineConfig(({mode}) => {
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
-              if (id.includes('firebase')) return 'vendor-firebase';
+              if (id.includes('@supabase')) return 'vendor-supabase';
               if (id.includes('pdfjs-dist') || id.includes('pdf-lib') || id.includes('react-pdf')) return 'vendor-pdf';
               if (id.includes('lucide-react') || id.includes('motion')) return 'vendor-ui';
               if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) return 'vendor-react';

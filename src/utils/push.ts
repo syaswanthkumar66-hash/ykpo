@@ -1,5 +1,4 @@
-import { db } from '../firebase';
-import { collection, addDoc, query, where, getDocs, updateDoc } from 'firebase/firestore';
+import { supabase } from '../supabase';
 
 export const webPushPublicKey = process.env.VAPID_PUBLIC_KEY || 'BKBmjGF6XWxFd6UQtsQlUgPs54dERDDqs20oMNjccb5z4irQTxysbZwSW7j3D3aeockUGiqlz6Ert5PagZtcWcs';
 
@@ -21,28 +20,26 @@ function urlBase64ToUint8Array(base64String: string) {
 export async function savePushSubscription(subscription: PushSubscription, email?: string) {
   try {
     const subStr = JSON.stringify(subscription);
-    const subsRef = collection(db, 'push_subscriptions');
-    const q = query(subsRef, where('endpoint', '==', subscription.endpoint));
-    const querySnapshot = await getDocs(q);
+    if (supabase) {
+      const { data: existing } = await supabase
+        .from('push_subscriptions')
+        .select('id')
+        .eq('endpoint', subscription.endpoint)
+        .maybeSingle();
 
-    if (querySnapshot.empty) {
-      // Save new subscription
-      await addDoc(subsRef, {
-        endpoint: subscription.endpoint,
-        subscription: subStr,
-        email: email || null,
-        userAgent: navigator.userAgent,
-        createdAt: new Date().toISOString()
-      });
-    } else {
-      // Update existing subscription with the current email
-      if (email) {
-        querySnapshot.forEach(async (document) => {
-          await updateDoc(document.ref, { 
-            email: email,
-            subscription: subStr // Update the subscription key just in case it refreshed
-          });
-        });
+      if (!existing) {
+        await supabase.from('push_subscriptions').insert([{
+          endpoint: subscription.endpoint,
+          subscription: subscription,
+          email: email || null,
+          user_agent: navigator.userAgent,
+          created_at: new Date().toISOString()
+        }]);
+      } else if (email) {
+        await supabase
+          .from('push_subscriptions')
+          .update({ email, subscription: subscription })
+          .eq('endpoint', subscription.endpoint);
       }
     }
   } catch (error) {
@@ -104,20 +101,23 @@ export async function sendPushNotification(subscription: PushSubscription, title
 export async function sendNotificationToUser(email: string, title: string, body: string, url: string = '/') {
   if (!email) return;
   try {
-    const q = query(collection(db, 'push_subscriptions'), where('email', '==', email));
-    const snapshot = await getDocs(q);
-    const promises = snapshot.docs.map(doc => {
-      const subData = doc.data();
-      if (subData.subscription) {
-        const subObj = typeof subData.subscription === 'string' ? JSON.parse(subData.subscription) : subData.subscription;
+    if (!supabase) return;
+    const { data: rows } = await supabase
+      .from('push_subscriptions')
+      .select('subscription')
+      .eq('email', email);
+
+    if (rows && rows.length > 0) {
+      const promises = rows.map(subRow => {
+        const subObj = typeof subRow.subscription === 'string' ? JSON.parse(subRow.subscription) : subRow.subscription;
         return fetch('/api/push/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ subscription: subObj, title, body, url })
         }).catch(err => console.error("Error pushing to sub", err));
-      }
-    });
-    await Promise.all(promises);
+      });
+      await Promise.all(promises);
+    }
   } catch (e) {
     console.error("Failed to broadcast push to user", e);
   }
@@ -125,19 +125,22 @@ export async function sendNotificationToUser(email: string, title: string, body:
 
 export async function broadcastNotification(title: string, body: string, url: string = '/') {
   try {
-    const snapshot = await getDocs(collection(db, 'push_subscriptions'));
-    const promises = snapshot.docs.map(doc => {
-      const subData = doc.data();
-      if (subData.subscription) {
-        const subObj = typeof subData.subscription === 'string' ? JSON.parse(subData.subscription) : subData.subscription;
+    if (!supabase) return;
+    const { data: rows } = await supabase
+      .from('push_subscriptions')
+      .select('subscription');
+
+    if (rows && rows.length > 0) {
+      const promises = rows.map(subRow => {
+        const subObj = typeof subRow.subscription === 'string' ? JSON.parse(subRow.subscription) : subRow.subscription;
         return fetch('/api/push/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ subscription: subObj, title, body, url })
         }).catch(err => console.error("Error pushing to sub", err));
-      }
-    });
-    await Promise.all(promises);
+      });
+      await Promise.all(promises);
+    }
   } catch (e) {
     console.error("Failed to broadcast push to all users", e);
   }

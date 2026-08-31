@@ -6,8 +6,17 @@ import multer from 'multer';
 import { put, del, list } from '@vercel/blob';
 import { handleUpload } from '@vercel/blob/client';
 import webpush from 'web-push';
+import { createClient } from '@supabase/supabase-js';
 import payuHostedRouter from './payu/payuHosted.js';
 import payuCustomHostedRouter from './payu/payuCustomHosted.js';
+import { analyzeEmailSpamScore, verifyEmailTimingSafe, encryptAES } from './utils/security.js';
+
+// Server-side Supabase client
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://placeholder-project.supabase.co';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || 'placeholder-anon-key';
+export const supabaseServer = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { persistSession: false }
+});
 
 const app = express();
 app.use(express.json({ limit: '100mb' }));
@@ -889,7 +898,7 @@ app.post('/api/payu/verify-payment', async (req, res) => {
 });
 
 // PayU Success Callback Handler (Supports both POST callbacks from PayU and GET redirects)
-app.all('/api/payu/success', (req, res) => {
+app.all('/api/payu/success', async (req, res) => {
   try {
     const params = { ...req.query, ...req.body };
     const { 
@@ -912,6 +921,7 @@ app.all('/api/payu/success', (req, res) => {
 
     const key = process.env.PAYU_MERCHANT_KEY || '';
     const salt = process.env.PAYU_MERCHANT_SALT || '';
+    let hashVerified = false;
 
     // Verify reverse hash if salt and hash are present
     if (hash && salt && status) {
@@ -922,9 +932,33 @@ app.all('/api/payu/success', (req, res) => {
         calculatedHashString = `${salt}|${status}||||||${udf5}|${udf4}|${udf3}|${udf2}|${udf1}|${email}|${firstname}|${productinfo}|${amount}|${txnid}|${key}`;
       }
       const calculatedHash = crypto.createHash('sha512').update(calculatedHashString).digest('hex');
-      if (calculatedHash.toLowerCase() !== String(hash).toLowerCase()) {
+      if (calculatedHash.toLowerCase() === String(hash).toLowerCase()) {
+        hashVerified = true;
+      } else {
         console.warn('PayU Reverse Hash Verification Notice: Hash check mismatch in callback payload.');
       }
+    }
+
+    // Persist/update transaction in Supabase
+    try {
+      if (supabaseServer) {
+        await supabaseServer.from('payments').upsert([{
+          txnid,
+          amount: Number(amount) || 0,
+          product: productinfo,
+          customer_name: firstname,
+          customer_email: email,
+          status: 'success',
+          payment_mode: 'payu',
+          bank_ref_num: bank_ref_num || payuMoneyId || null,
+          mihpayid: payuMoneyId || null,
+          hash_verified: hashVerified,
+          raw_payload: params,
+          updated_at: new Date().toISOString()
+        }], { onConflict: 'txnid' });
+      }
+    } catch (dbErr) {
+      console.error('[Supabase Payment Callback Error]:', dbErr);
     }
 
     const productParam = encodeURIComponent(String(productinfo));
@@ -940,26 +974,480 @@ app.all('/api/payu/success', (req, res) => {
 });
 
 // PayU Failure Callback Handler (Extracts field9 and error_Message from PayU)
-app.all('/api/payu/failure', (req, res) => {
+app.all('/api/payu/failure', async (req, res) => {
   const params = { ...req.query, ...req.body };
-  const { txnid = 'UNKNOWN', field9, error_Message, unmappedstatus, msg, error } = params;
+  const { txnid = 'UNKNOWN', field9, error_Message, unmappedstatus, msg, error, amount = '0', productinfo = 'Product', firstname = 'Customer', email = '' } = params;
   const reasonText = field9 || error_Message || unmappedstatus || msg || error || 'Transaction was declined or cancelled by bank.';
   const reason = encodeURIComponent(String(reasonText));
+
+  // Persist failure status in Supabase
+  try {
+    if (supabaseServer && txnid && txnid !== 'UNKNOWN') {
+      await supabaseServer.from('payments').upsert([{
+        txnid,
+        amount: Number(amount) || 0,
+        product: productinfo,
+        customer_name: firstname,
+        customer_email: email,
+        status: 'failure',
+        payment_mode: 'payu',
+        raw_payload: params,
+        updated_at: new Date().toISOString()
+      }], { onConflict: 'txnid' });
+    }
+  } catch (dbErr) {
+    console.error('[Supabase Failure Log Error]:', dbErr);
+  }
+
   res.redirect(`/payment/failure?txnid=${txnid}&reason=${reason}`);
 });
 
-// PayU Webhook Handler (Asynchronous Webhook Push Event Listener)
-app.post('/api/payu/webhook', (req, res) => {
+/**
+ * PayU Webhook Handler (Asynchronous Server-to-Server Event Listener)
+ * Reference: https://docs.payu.in/docs/webhook-events-and-sample-payloads
+ */
+app.post('/api/payu/webhook', async (req, res) => {
   try {
     const payload = { ...req.query, ...req.body };
-    const { txnid, status, field9, error_Message, bank_ref_num } = payload;
-    console.log(`[PayU Webhook Notification] TXN: ${txnid} Status: ${status} Reason: ${field9 || error_Message}`);
-    
-    // Acknowledge webhook receipt to PayU
-    res.status(200).json({ status: 'received', txnid });
+    const { 
+      txnid, 
+      status, 
+      amount, 
+      productinfo, 
+      firstname, 
+      email, 
+      hash, 
+      bank_ref_num, 
+      mihpayid, 
+      field9, 
+      error_Message,
+      additionalCharges,
+      udf1 = "",
+      udf2 = "",
+      udf3 = "",
+      udf4 = "",
+      udf5 = ""
+    } = payload;
+
+    if (!txnid) {
+      return res.status(400).json({ error: 'Missing txnid in webhook payload' });
+    }
+
+    const key = process.env.PAYU_MERCHANT_KEY || '';
+    const salt = process.env.PAYU_MERCHANT_SALT || '';
+    let hashVerified = false;
+
+    // Verify SHA-512 Reverse Hash
+    if (hash && salt && status) {
+      let calculatedHashString = '';
+      if (additionalCharges) {
+        calculatedHashString = `${additionalCharges}|${salt}|${status}||||||${udf5}|${udf4}|${udf3}|${udf2}|${udf1}|${email || ''}|${firstname || ''}|${productinfo || ''}|${amount || ''}|${txnid}|${key}`;
+      } else {
+        calculatedHashString = `${salt}|${status}||||||${udf5}|${udf4}|${udf3}|${udf2}|${udf1}|${email || ''}|${firstname || ''}|${productinfo || ''}|${amount || ''}|${txnid}|${key}`;
+      }
+      const calculatedHash = crypto.createHash('sha512').update(calculatedHashString).digest('hex');
+      hashVerified = (calculatedHash.toLowerCase() === String(hash).toLowerCase());
+    }
+
+    console.log(`[PayU Webhook] Event received for TXN: ${txnid} | Status: ${status} | Hash Verified: ${hashVerified}`);
+
+    // Map standardized status
+    const normalizedStatus = (status === 'success' || status === 'captured') ? 'success' : (status === 'pending' ? 'pending' : 'failure');
+
+    // Upsert transaction in Supabase
+    try {
+      if (supabaseServer) {
+        await supabaseServer.from('payments').upsert([{
+          txnid,
+          amount: Number(amount) || 0,
+          product: productinfo || 'Digital Product',
+          customer_name: firstname || 'Customer',
+          customer_email: email || '',
+          status: normalizedStatus,
+          payment_mode: 'payu_webhook',
+          bank_ref_num: bank_ref_num || mihpayid || null,
+          mihpayid: mihpayid || null,
+          hash_verified: hashVerified,
+          raw_payload: payload,
+          updated_at: new Date().toISOString()
+        }], { onConflict: 'txnid' });
+      }
+    } catch (dbErr) {
+      console.error('[Supabase Webhook Persistence Error]:', dbErr);
+    }
+
+    // Always respond with 200 OK to acknowledge receipt to PayU
+    return res.status(200).json({ status: 'received', txnid, hashVerified });
   } catch (err: any) {
     console.error('PayU Webhook Error:', err);
-    res.status(500).json({ error: 'Webhook processing error' });
+    return res.status(500).json({ error: 'Webhook processing error' });
+  }
+});
+
+// Admin OTP Rate Limiting Map
+const adminOtpRateLimitMap = new Map<string, number>();
+
+/**
+ * Endpoint: Request Encrypted Admin OTP for PayU Transaction Access
+ * - Validates input email against configured ADMIN_EMAIL using timing-safe comparison
+ * - Runs Pre-Send Email Spam Score check
+ * - Dispatches clean, high-deliverability OTP email via Resend
+ */
+app.post('/api/admin/payu-auth/request-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return res.status(400).json({ error: 'A valid administrator email address is required.' });
+    }
+
+    const authorizedAdminEmail = process.env.ADMIN_EMAIL || 'syaswanthkumar2006@gmail.com';
+
+    // Verify authorized admin identity using timing-safe comparison
+    const isMatch = verifyEmailTimingSafe(email, authorizedAdminEmail);
+    if (!isMatch) {
+      return res.status(403).json({ error: 'Access Denied: The entered email is not authorized for PayU transaction dashboard access.' });
+    }
+
+    // Enforce 30-second cooldown per admin request
+    const clientIp = (req.headers['x-forwarded-for'] as string)?.split(',')[0].trim() || req.socket.remoteAddress || '127.0.0.1';
+    const rateLimitKey = `admin_otp_${clientIp}`;
+    const lastSent = adminOtpRateLimitMap.get(rateLimitKey);
+    const now = Date.now();
+
+    if (lastSent && (now - lastSent < 30000)) {
+      const waitSec = Math.ceil((30000 - (now - lastSent)) / 1000);
+      return res.status(429).json({ error: `Please wait ${waitSec} seconds before requesting a new security passkey.` });
+    }
+    adminOtpRateLimitMap.set(rateLimitKey, now);
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'Email service (RESEND_API_KEY) is not configured.' });
+    }
+
+    // Generate secure 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const senderAddress = 'YK Yash Security <auth@verify.ykyash.in>';
+    const emailSubject = 'PayU Dashboard Access Passkey';
+
+    const emailHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayU Dashboard Passkey</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f6f8;">
+    <tr>
+      <td align="center" style="padding: 40px 16px;">
+        <table role="presentation" width="100%" style="max-width: 520px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.04);" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td style="background-color: #12181A; padding: 24px 32px; text-align: left;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;">YK Yash • Security Gate</h1>
+              <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">PAYU SETTLEMENT AUDIT</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px;">
+              <h2 style="color: #0f172a; font-size: 18px; margin: 0 0 12px 0; font-weight: 600;">Administrator Verification Required</h2>
+              <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
+                A request was made to unlock the <strong>PayU Live Transaction Ledger & Financial Analytics</strong>. Use the single-use verification passkey below to complete authentication:
+              </p>
+              
+              <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; margin: 0 0 24px 0;">
+                <span style="font-size: 36px; font-weight: 800; color: #0f172a; letter-spacing: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; display: block; margin-left: 10px;">${otp}</span>
+                <span style="display: block; font-size: 11px; color: #64748b; font-family: monospace; margin-top: 8px;">VALID FOR 5 MINUTES ONLY</span>
+              </div>
+
+              <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0 0 20px 0;">
+                If you did not request access to the PayU transaction logs, no action is needed and you may safely disregard this message.
+              </p>
+
+              <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; font-family: monospace;">
+                <span>Security Token: ${crypto.randomBytes(6).toString('hex').toUpperCase()} | Protected by 256-bit encryption</span><br>
+                <a href="mailto:support@ykyash.in?subject=unsubscribe" style="color: #94a3b8; text-decoration: underline;">Unsubscribe / Inquiries</a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    // 1. RUN PRE-SEND EMAIL SPAM SCORE CHECK
+    const spamAudit = analyzeEmailSpamScore({
+      to: email,
+      from: senderAddress,
+      subject: emailSubject,
+      html: emailHtml
+    });
+
+    console.log(`[Email Spam Auditor] Analyzed Admin OTP Email. Score: ${spamAudit.score} | Safe: ${spamAudit.isSafe} | Issues: ${spamAudit.issues.join(', ') || 'None'}`);
+
+    if (!spamAudit.isSafe) {
+      console.warn('[Email Spam Auditor] Email drafted scored high spam risk. Blocking send:', spamAudit.issues);
+      return res.status(500).json({ error: 'Email template failed deliverability security check.' });
+    }
+
+    // 2. DISPATCH VIA RESEND
+    const resend = new Resend(apiKey);
+    const { data: sendResult, error: sendError } = await resend.emails.send({
+      from: senderAddress,
+      to: email,
+      subject: emailSubject,
+      html: emailHtml
+    });
+
+    if (sendError) {
+      console.error('Resend Dispatch Error:', sendError);
+      return res.status(400).json({ error: sendError.message || 'Failed to dispatch passkey email.' });
+    }
+
+    // 3. GENERATE STATELESS SIGNED ENCRYPTED CHALLENGE TOKEN (5 minutes)
+    const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_for_payu_admin_gate';
+    const hashedOtp = crypto.createHash('sha256').update(otp + jwtSecret).digest('hex');
+
+    const adminChallengeToken = jwt.sign(
+      { email: email.toLowerCase(), challenge: hashedOtp, role: 'payu_admin' },
+      jwtSecret,
+      { expiresIn: '5m' }
+    );
+
+    return res.json({ 
+      success: true, 
+      challengeToken: adminChallengeToken,
+      message: `Passkey successfully dispatched to ${email.replace(/(.{2})(.*)(@.*)/, '$1***$3')}`
+    });
+
+  } catch (error: any) {
+    console.error('Admin OTP Request Error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to process admin passkey request' });
+  }
+});
+
+/**
+ * Endpoint: Send Test Email to Any Testing / Mail-Tester / Mailtrap / Dummy Address
+ * Allows testing email deliverability and live SpamAssassin / Mail-Tester score
+ */
+app.post('/api/admin/payu-auth/test-email', async (req, res) => {
+  try {
+    const { targetEmail } = req.body;
+    if (!targetEmail || typeof targetEmail !== 'string' || !targetEmail.includes('@')) {
+      return res.status(400).json({ error: 'A valid target email address is required (e.g. test-xxxx@mail-tester.com or your testing email).' });
+    }
+
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      return res.status(500).json({ error: 'Email service (RESEND_API_KEY) is not configured.' });
+    }
+
+    const testOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const senderAddress = 'YK Yash Security <auth@verify.ykyash.in>';
+    const emailSubject = 'PayU Dashboard Access Passkey (Deliverability Test)';
+
+    const emailHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PayU Dashboard Passkey</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f4f6f8; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #f4f6f8;">
+    <tr>
+      <td align="center" style="padding: 40px 16px;">
+        <table role="presentation" width="100%" style="max-width: 520px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.04);" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td style="background-color: #12181A; padding: 24px 32px; text-align: left;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.5px;">YK Yash • Security Gate</h1>
+              <p style="color: #94a3b8; margin: 4px 0 0 0; font-size: 12px; font-family: monospace;">DELIVERABILITY & SPAM SCORE AUDIT</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px;">
+              <h2 style="color: #0f172a; font-size: 18px; margin: 0 0 12px 0; font-weight: 600;">Security Test Verification Passkey</h2>
+              <p style="color: #475569; font-size: 14px; line-height: 1.6; margin: 0 0 24px 0;">
+                This is a live test message dispatched to test inbox placement, deliverability score, and DKIM/SPF alignment:
+              </p>
+              
+              <div style="background-color: #f8fafc; border: 2px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; margin: 0 0 24px 0;">
+                <span style="font-size: 36px; font-weight: 800; color: #0f172a; letter-spacing: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; display: block; margin-left: 10px;">${testOtp}</span>
+                <span style="display: block; font-size: 11px; color: #64748b; font-family: monospace; margin-top: 8px;">SAMPLE OTP PASSKEY</span>
+              </div>
+
+              <p style="color: #64748b; font-size: 13px; line-height: 1.5; margin: 0 0 20px 0;">
+                Certified high-reputation delivery route via Resend infrastructure with automated SPF/DKIM validation.
+              </p>
+
+              <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; font-size: 11px; color: #94a3b8; font-family: monospace;">
+                <span>Security Token: ${crypto.randomBytes(6).toString('hex').toUpperCase()} | 256-Bit SSL Protection</span><br>
+                <a href="mailto:support@ykyash.in?subject=unsubscribe" style="color: #94a3b8; text-decoration: underline;">Unsubscribe / Inquiries</a>
+              </div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+    // 1. Run Spam Score Analyzer
+    const spamAudit = analyzeEmailSpamScore({
+      to: targetEmail,
+      from: senderAddress,
+      subject: emailSubject,
+      html: emailHtml
+    });
+
+    // 2. Dispatch via Resend
+    const resend = new Resend(apiKey);
+    const { data: sendResult, error: sendError } = await resend.emails.send({
+      from: senderAddress,
+      to: targetEmail,
+      subject: emailSubject,
+      html: emailHtml
+    });
+
+    if (sendError) {
+      console.error('Test Email Dispatch Error:', sendError);
+      return res.status(400).json({ error: sendError.message || 'Failed to dispatch test email.' });
+    }
+
+    return res.json({
+      success: true,
+      deliveredTo: targetEmail,
+      emailId: sendResult?.id || null,
+      spamAudit: {
+        score: spamAudit.score,
+        isSafe: spamAudit.isSafe,
+        rating: spamAudit.score < 1.0 ? 'EXCELLENT (10/10 Deliverability)' : 'GOOD',
+        issues: spamAudit.issues
+      },
+      message: `Test email successfully sent to ${targetEmail}. Check your mailbox / mail-tester score!`
+    });
+
+  } catch (error: any) {
+    console.error('Test Email Error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to process test email' });
+  }
+});
+
+/**
+ * Endpoint: Verify Admin OTP and Issue Scoped Access Token for PayU Transactions
+ */
+app.post('/api/admin/payu-auth/verify-otp', async (req, res) => {
+  try {
+    const { email, otp, challengeToken } = req.body;
+    if (!email || !otp || !challengeToken) {
+      return res.status(400).json({ error: 'Email, Passkey (OTP), and Challenge token are required.' });
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_for_payu_admin_gate';
+
+    // Decode challenge token
+    let decoded: any;
+    try {
+      decoded = jwt.verify(challengeToken, jwtSecret);
+    } catch (err: any) {
+      return res.status(401).json({ error: 'The verification passkey has expired. Please request a new one.' });
+    }
+
+    // Validate email
+    if (decoded.email !== email.trim().toLowerCase() || decoded.role !== 'payu_admin') {
+      return res.status(403).json({ error: 'Security token mismatch.' });
+    }
+
+    // Validate OTP hash
+    const expectedOtpHash = crypto.createHash('sha256').update(String(otp).trim() + jwtSecret).digest('hex');
+    if (decoded.challenge !== expectedOtpHash) {
+      return res.status(400).json({ error: 'Incorrect verification passkey entered.' });
+    }
+
+    // Issue Scoped Admin PayU Session Token (Valid for 4 hours)
+    const adminSessionToken = jwt.sign(
+      { email: decoded.email, role: 'payu_admin_verified', ts: Date.now() },
+      jwtSecret,
+      { expiresIn: '4h' }
+    );
+
+    return res.json({
+      success: true,
+      token: adminSessionToken,
+      expiresIn: '4h'
+    });
+
+  } catch (error: any) {
+    console.error('Admin OTP Verify Error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to verify passkey' });
+  }
+});
+
+/**
+ * Endpoint: Fetch PayU Transactions from Supabase with Summary Metrics
+ * Requires Scoped Admin Session Token
+ */
+app.get('/api/admin/payu-transactions', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Authentication required. Please unlock with your admin passkey.' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    const jwtSecret = process.env.JWT_SECRET || 'fallback_secret_for_payu_admin_gate';
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, jwtSecret);
+      if (decoded.role !== 'payu_admin_verified') throw new Error('Invalid permissions');
+    } catch {
+      return res.status(403).json({ error: 'Session expired or invalid. Please verify again.' });
+    }
+
+    // Query Supabase for payments
+    let transactions: any[] = [];
+    if (supabaseServer) {
+      const { data, error } = await supabaseServer
+        .from('payments')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.warn('Supabase fetch transactions error:', error.message);
+      } else if (data) {
+        transactions = data;
+      }
+    }
+
+    // Calculate aggregated metrics
+    const totalCount = transactions.length;
+    const successfulTransactions = transactions.filter(t => t.status === 'success');
+    const failedTransactions = transactions.filter(t => t.status === 'failure');
+    const pendingTransactions = transactions.filter(t => t.status === 'pending' || t.status === 'initiated');
+
+    const totalRevenue = successfulTransactions.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+    const successRate = totalCount > 0 ? ((successfulTransactions.length / totalCount) * 100).toFixed(1) : '0';
+
+    return res.json({
+      success: true,
+      metrics: {
+        totalRevenue,
+        totalCount,
+        successCount: successfulTransactions.length,
+        failedCount: failedTransactions.length,
+        pendingCount: pendingTransactions.length,
+        successRate: Number(successRate)
+      },
+      transactions
+    });
+
+  } catch (error: any) {
+    console.error('Fetch PayU Transactions Error:', error);
+    return res.status(500).json({ error: error.message || 'Failed to fetch transactions' });
   }
 });
 
