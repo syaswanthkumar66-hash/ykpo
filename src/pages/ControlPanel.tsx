@@ -815,119 +815,119 @@ export default function ControlPanel() {
                   </div>
                 )}
 
-                {/* Live Deliverability & Spam Score Tester Modal */}
-                {showTestMailModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-                    <div className="bg-white border border-[#557B83]/25 rounded-3xl p-6 sm:p-8 max-w-md w-full text-left font-mono text-xs space-y-5 shadow-2xl">
-                      <div className="flex items-center justify-between border-b border-[#557B83]/15 pb-3">
-                        <div className="flex items-center gap-2">
-                          <ShieldCheck className="w-5 h-5 text-[#39AEA9]" />
-                          <h3 className="font-bold text-[#12181A] text-sm">Deliverability & Spam Score Tester</h3>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setShowTestMailModal(false);
-                            setTestEmailResult(null);
-                            setTestEmailError(null);
-                          }}
-                          className="p-1 rounded-full hover:bg-[#557B83]/10 text-[#557B83] hover:text-[#12181A] cursor-pointer"
-                        >
-                          ✕
-                        </button>
-                      </div>
-
-                      <p className="text-[#557B83] leading-relaxed font-sans text-xs">
-                        Enter any testing email address (such as your address on <strong className="text-[#1D5C58]">mail-tester.com</strong>, Mailtrap, or a dummy mailbox) to test real-time inbox placement and spam scoring:
-                      </p>
-
-                      <form onSubmit={handleSendTestEmail} className="space-y-3.5">
-                        <div>
-                          <label className="block text-[11px] uppercase text-[#557B83] font-bold mb-1">Target Recipient Email Address</label>
-                          <input
-                            type="email"
-                            value={testEmailInput}
-                            onChange={(e) => setTestEmailInput(e.target.value)}
-                            placeholder="Enter recipient email (e.g. your email or mail-tester)"
-                            required
-                            className="w-full bg-[#F8FAFB] border border-[#557B83]/25 rounded-xl px-4 py-2.5 text-xs text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white font-mono"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="block text-[11px] uppercase text-[#557B83] font-bold mb-1">From Sender Address</label>
-                          <select
-                            value={testFromInput}
-                            onChange={(e) => setTestFromInput(e.target.value)}
-                            className="w-full bg-[#F8FAFB] border border-[#557B83]/25 rounded-xl px-3 py-2 text-xs text-[#12181A] focus:outline-none focus:border-[#39AEA9] focus:bg-white font-mono cursor-pointer"
-                          >
-                            <option value="YK Yash <auth@verify.ykyash.in>">YK Yash &lt;auth@verify.ykyash.in&gt; (Custom Domain)</option>
-                            <option value="YK Yash <onboarding@resend.dev>">YK Yash &lt;onboarding@resend.dev&gt; (Resend Sandbox)</option>
-                          </select>
-                          <p className="text-[10px] text-[#557B83] mt-1 font-sans">
-                            {testFromInput.includes('resend.dev') 
-                              ? '⚠️ Resend Sandbox can only deliver to your registered Resend account email.' 
-                              : '✅ Custom domain sends to any inbox once DNS records are verified.'}
-                          </p>
-                        </div>
-
-                        <button
-                          type="submit"
-                          disabled={testEmailLoading}
-                          className="w-full py-3 rounded-xl font-bold uppercase tracking-wider text-xs bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] hover:from-[#164845] hover:to-[#2F938F] text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                        >
-                          {testEmailLoading ? (
-                            <>
-                              <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Dispatching Test Email...
-                            </>
-                          ) : (
-                            <>
-                              <Send className="w-3.5 h-3.5" /> Send Test Email
-                            </>
-                          )}
-                        </button>
-                      </form>
-
-                      {testEmailError && (
-                        <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs space-y-2 text-left">
-                          <div className="flex items-center gap-2 font-bold text-red-800">
-                            <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
-                            <span>Dispatch Failed</span>
-                          </div>
-                          <p className="text-[11px] leading-relaxed text-red-700 font-sans">
-                            {testEmailError}
-                          </p>
-                          {testEmailResult?.details?.helpHint && (
-                            <div className="p-2.5 rounded-xl bg-white border border-red-200 text-[11px] font-mono text-slate-800">
-                              <strong>💡 Diagnosis:</strong> {testEmailResult.details.helpHint}
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {testEmailResult && testEmailResult.success && (
-                        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 space-y-2 text-xs">
-                          <div className="flex items-center gap-2 font-bold text-sm text-emerald-900">
-                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                            <span>{testEmailResult.spamAudit?.rating || 'DISPATCHED SUCCESSFULLY'}</span>
-                          </div>
-                          <div className="text-[11px] text-[#12181A] space-y-1">
-                            <div>• <strong>Internal Spam Score:</strong> {testEmailResult.spamAudit?.score} / 10.0 (Safe threshold &lt; 2.0)</div>
-                            <div>• <strong>Delivered To:</strong> {testEmailResult.deliveredTo}</div>
-                            <div>• <strong>Sender Address Used:</strong> {testEmailResult.usedSender || 'Resend Default'}</div>
-                            {testEmailResult.emailId && <div>• <strong>Resend Message ID:</strong> {testEmailResult.emailId}</div>}
-                          </div>
-                          <p className="text-[10px] text-emerald-700 pt-1 font-medium">
-                            Now check your score on Mail-Tester or open your mailbox to verify inbox placement!
-                          </p>
-                        </div>
-                      )}
-
-                    </div>
-                  </div>
-                )}
-
               </div>
             )}
+          </div>
+        )}
+
+        {/* Live Deliverability & Spam Score Tester Modal (Accessible across all views) */}
+        {showTestMailModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <div className="bg-white border border-[#557B83]/25 rounded-3xl p-6 sm:p-8 max-w-md w-full text-left font-mono text-xs space-y-5 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+              <div className="flex items-center justify-between border-b border-[#557B83]/15 pb-3">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-[#39AEA9]" />
+                  <h3 className="font-bold text-[#12181A] text-sm">Deliverability & Test Mail Dispatch</h3>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowTestMailModal(false);
+                    setTestEmailResult(null);
+                    setTestEmailError(null);
+                  }}
+                  className="p-1 rounded-full hover:bg-[#557B83]/10 text-[#557B83] hover:text-[#12181A] cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <p className="text-[#557B83] leading-relaxed font-sans text-xs">
+                Enter your test recipient email address (e.g. personal email or <strong className="text-[#1D5C58]">mail-tester.com</strong>) to verify live delivery:
+              </p>
+
+              <form onSubmit={handleSendTestEmail} className="space-y-3.5">
+                <div>
+                  <label className="block text-[11px] uppercase text-[#557B83] font-bold mb-1">Target Recipient Email Address</label>
+                  <input
+                    type="email"
+                    value={testEmailInput}
+                    onChange={(e) => setTestEmailInput(e.target.value)}
+                    placeholder="Enter recipient email (e.g. you@example.com)"
+                    required
+                    className="w-full bg-[#F8FAFB] border border-[#557B83]/25 rounded-xl px-4 py-2.5 text-xs text-[#12181A] placeholder:text-[#557B83]/40 focus:outline-none focus:border-[#39AEA9] focus:bg-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] uppercase text-[#557B83] font-bold mb-1">From Sender Address</label>
+                  <select
+                    value={testFromInput}
+                    onChange={(e) => setTestFromInput(e.target.value)}
+                    className="w-full bg-[#F8FAFB] border border-[#557B83]/25 rounded-xl px-3 py-2 text-xs text-[#12181A] focus:outline-none focus:border-[#39AEA9] focus:bg-white font-mono cursor-pointer"
+                  >
+                    <option value="YK Yash <auth@verify.ykyash.in>">YK Yash &lt;auth@verify.ykyash.in&gt; (Custom Domain)</option>
+                    <option value="YK Yash <onboarding@resend.dev>">YK Yash &lt;onboarding@resend.dev&gt; (Resend Sandbox)</option>
+                  </select>
+                  <p className="text-[10px] text-[#557B83] mt-1 font-sans">
+                    {testFromInput.includes('resend.dev') 
+                      ? '⚠️ Resend Sandbox can only deliver to your registered Resend account email.' 
+                      : '✅ Custom domain sends to any inbox once DNS records are verified.'}
+                  </p>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={testEmailLoading}
+                  className="w-full py-3 rounded-xl font-bold uppercase tracking-wider text-xs bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] hover:from-[#164845] hover:to-[#2F938F] text-white shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  {testEmailLoading ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" /> Dispatching Test Email...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" /> Send Test Email
+                    </>
+                  )}
+                </button>
+              </form>
+
+              {testEmailError && (
+                <div className="p-3.5 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-xs space-y-2 text-left">
+                  <div className="flex items-center gap-2 font-bold text-red-800">
+                    <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+                    <span>Dispatch Failed</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-red-700 font-sans">
+                    {testEmailError}
+                  </p>
+                  {testEmailResult?.details?.helpHint && (
+                    <div className="p-2.5 rounded-xl bg-white border border-red-200 text-[11px] font-mono text-slate-800">
+                      <strong>💡 Diagnosis:</strong> {testEmailResult.details.helpHint}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {testEmailResult && testEmailResult.success && (
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 space-y-2 text-xs">
+                  <div className="flex items-center gap-2 font-bold text-sm text-emerald-900">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                    <span>{testEmailResult.spamAudit?.rating || 'DISPATCHED SUCCESSFULLY'}</span>
+                  </div>
+                  <div className="text-[11px] text-[#12181A] space-y-1">
+                    <div>• <strong>Internal Spam Score:</strong> {testEmailResult.spamAudit?.score} / 10.0 (Safe threshold &lt; 2.0)</div>
+                    <div>• <strong>Delivered To:</strong> {testEmailResult.deliveredTo}</div>
+                    <div>• <strong>Sender Address Used:</strong> {testEmailResult.usedSender || 'Resend Default'}</div>
+                    {testEmailResult.emailId && <div>• <strong>Resend Message ID:</strong> {testEmailResult.emailId}</div>}
+                  </div>
+                  <p className="text-[10px] text-emerald-700 pt-1 font-medium">
+                    Now check your score on Mail-Tester or open your mailbox to verify inbox placement!
+                  </p>
+                </div>
+              )}
+
+            </div>
           </div>
         )}
 
