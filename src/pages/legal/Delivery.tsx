@@ -12,8 +12,7 @@ export default function Delivery() {
         <div className="glass-panel p-5 rounded-2xl text-xs sm:text-sm text-[#557B83] space-y-1.5 border border-[#557B83]/20">
           <p><strong className="text-[#12181A]">Domain:</strong> {MERCHANT_KYC_DETAILS.domain}</p>
           <p><strong className="text-[#12181A]">Proprietor:</strong> {MERCHANT_KYC_DETAILS.legalName} ({MERCHANT_KYC_DETAILS.businessName})</p>
-          <p><strong className="text-[#12181A]">Official Contact:</strong> {MERCHANT_KYC_DETAILS.officialEmail} | {MERCHANT_KYC_DETAILS.phone}</p>
-          <p><strong className="text-[#12181A]">Registered Address:</strong> {MERCHANT_KYC_DETAILS.registeredAddress}</p>
+          <p><strong className="text-[#12181A]">Official Contact:</strong> {MERCHANT_KYC_DETAILS.officialEmail}</p>
         </div>
 
         {/* Highlight Banner */}
@@ -57,7 +56,7 @@ export default function Delivery() {
           <div className="glass-panel p-5 rounded-2xl border border-[#557B83]/20 text-xs sm:text-sm text-[#557B83] space-y-2">
             <p>1. Check your email Spam, Junk, or Promotions folder.</p>
             <p>2. Verify your transaction on our <a href="/payment/success" className="text-[#39AEA9] underline font-medium">Payment Status Portal</a> using your Transaction ID.</p>
-            <p>3. Directly reach out to our emergency support desk at <strong className="text-[#12181A]">{MERCHANT_KYC_DETAILS.officialEmail}</strong> or call <strong className="text-[#12181A]">{MERCHANT_KYC_DETAILS.phone}</strong> for instant manual re-issuance.</p>
+            <p>3. Directly reach out to our emergency support desk at <strong className="text-[#12181A]">{MERCHANT_KYC_DETAILS.officialEmail}</strong> for instant manual re-issuance.</p>
           </div>
         </div>
       </section>

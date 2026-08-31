@@ -154,7 +154,7 @@ ${markdownContent
               <span>Compliant with Indian IT Act (SPDI) & RBI Guidelines</span>
             </div>
             <div>
-              <span>Official: <a href="mailto:syaswanthkumar2006@gmail.com" className="text-[#12181A] underline">syaswanthkumar2006@gmail.com</a></span>
+              <span>Official: <a href="mailto:contact@ykyash.in" className="text-[#12181A] underline">contact@ykyash.in</a></span>
             </div>
           </div>
 

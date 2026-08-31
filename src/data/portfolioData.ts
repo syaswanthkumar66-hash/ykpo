@@ -143,12 +143,10 @@ export const SKILL_CATEGORIES = [
 
 export const MERCHANT_KYC_DETAILS = {
   legalName: 'S. Yaswanth Kumar',
-  businessName: 'YK Yash (Digital Engineering & Services)',
+  businessName: 'YK Yash (Full-Stack & IoT Systems Engineering)',
   domain: 'https://ykyash.in',
-  officialEmail: 'syaswanthkumar2006@gmail.com',
+  officialEmail: 'contact@ykyash.in',
   supportEmail: 'contact@ykyash.in',
-  phone: '+91 83090 80424',
-  registeredAddress: '602/1, PEERLACHAVADI STREET, Srikalahasti, Chittoor - 517644, Andhra Pradesh, India',
   operatingHours: 'Monday – Saturday: 10:00 AM – 7:00 PM IST',
   grievanceOfficer: 'S. Yaswanth Kumar (Lead Developer & Proprietor)',
   gstNumber: '' // Composition / Unregistered
@@ -158,22 +156,21 @@ export const LEGAL_TEXTS = {
   terms: {
     title: 'Terms and Conditions',
     lastUpdated: 'August 18, 2026',
-    summary: 'Governs the purchase of digital source code, templates, and freelance engineering service contracts on ykyash.in.',
+    summary: 'Governs the purchase of digital source code, templates, and engineering service contracts on ykyash.in.',
     content: `# TERMS AND CONDITIONS FOR DIGITAL PRODUCTS & FREELANCE SERVICES
 **Domain:** https://ykyash.in
 **Proprietor / Service Provider:** S. Yaswanth Kumar (Operating as "YK Yash")
-**Contact:** syaswanthkumar2006@gmail.com | +91 83090 80424
-**Registered Address:** 602/1, PEERLACHAVADI STREET, Srikalahasti, Chittoor - 517644, Andhra Pradesh, India
+**Contact:** contact@ykyash.in
 **Last Updated:** August 18, 2026
 
 ---
 
 ### 1. ACCEPTANCE OF TERMS
-By accessing https://ykyash.in, purchasing any digital product (templates, source code, boilerplates, firmware), or contracting freelance software/hardware engineering services, you ("Customer" or "Client") agree to be legally bound by these Terms and Conditions.
+By accessing https://ykyash.in, purchasing any digital product (templates, source code, boilerplates, firmware), or contracting software/hardware engineering services, you ("Customer" or "Client") agree to be legally bound by these Terms and Conditions.
 
 ---
 
-### 2. DIGITAL PRODUCTS STORE & LICENSING
+### 2. DIGITAL PRODUCTS & LICENSING
 2.1. **Grant of License:** Upon successful payment of the specified fee in Indian Rupees (INR), YK Yash grants the customer a non-exclusive, non-transferable, worldwide commercial license to use, modify, and integrate the downloaded source code into personal and commercial projects.
 2.2. **Restrictions:** You may NOT redistribute, resell, sub-license, or republish the raw source code files or template packages as a standalone competitor or boilerplate in public repositories or marketplaces.
 2.3. **Instant Delivery:** Digital products are delivered electronically. Upon payment clearance, download links are generated immediately on screen and confirmed via email.
@@ -201,7 +198,7 @@ By accessing https://ykyash.in, purchasing any digital product (templates, sourc
 ---
 
 ### 6. GOVERNING LAW & JURISDICTION
-These Terms shall be governed by and construed in accordance with the laws of the Republic of India. Any disputes arising hereunder shall be subject to the exclusive jurisdiction of the competent courts in Chittoor / Srikalahasti, Andhra Pradesh, India.`
+These Terms shall be governed by and construed in accordance with the laws of the Republic of India.`
   },
 
   privacy: {
@@ -211,17 +208,14 @@ These Terms shall be governed by and construed in accordance with the laws of th
     content: `# PRIVACY POLICY
 **Domain:** https://ykyash.in
 **Proprietor:** S. Yaswanth Kumar (YK Yash)
-**Official Email:** syaswanthkumar2006@gmail.com
-**Support Email:** contact@ykyash.in
-**Phone / WhatsApp:** +91 83090 80424
-**Registered Address:** 602/1, PEERLACHAVADI STREET, Srikalahasti, Chittoor - 517644, Andhra Pradesh, India
+**Official Email:** contact@ykyash.in
 **Applicable Framework:** Information Technology Act, 2000, SPDI Rules, 2011 & Indian DPDP Act.
 
 ---
 
 ### 1. INFORMATION WE COLLECT
 We collect only the minimum necessary information to fulfill your digital purchases and project inquiries:
-- **Customer Identity Data:** Full Name, Email Address, Mobile Number (optional for SMS dispatch), and Billing Country.
+- **Customer Identity Data:** Full Name, Email Address, and Billing Country.
 - **Transaction Metadata:** Transaction ID (\`txnid\`), Product/Milestone Identifier, Amount Paid in INR, Payment Method (UPI, NetBanking, Card), and Gateway Timestamp.
 - **Technical & Usage Data:** IP address, browser type, and download token timestamps to verify authorized file delivery.
 
@@ -246,7 +240,7 @@ We do NOT sell, rent, or trade personal customer information with any marketing 
 ---
 
 ### 4. DATA RETENTION & YOUR RIGHTS
-You have the right to request access to, correction of, or deletion of your personal records from our active database. For inquiries, email **syaswanthkumar2006@gmail.com**.
+You have the right to request access to, correction of, or deletion of your personal records from our active database. For inquiries, email **contact@ykyash.in**.
 
 ---
 
@@ -254,9 +248,7 @@ You have the right to request access to, correction of, or deletion of your pers
 In accordance with Information Technology Act, 2000:
 - **Grievance Officer:** S. Yaswanth Kumar
 - **Designation:** Proprietor & Engineering Lead
-- **Email:** syaswanthkumar2006@gmail.com / contact@ykyash.in
-- **Phone:** +91 83090 80424
-- **Address:** 602/1, PEERLACHAVADI STREET, Srikalahasti, Chittoor - 517644, Andhra Pradesh, India
+- **Email:** contact@ykyash.in
 - **Response Window:** Grievances are acknowledged within 24 hours and addressed within 15 business days.`
   },
 
@@ -267,8 +259,7 @@ In accordance with Information Technology Act, 2000:
     content: `# REFUND AND CANCELLATION POLICY
 **Domain:** https://ykyash.in
 **Proprietor:** S. Yaswanth Kumar (YK Yash)
-**Official Email:** syaswanthkumar2006@gmail.com | **Phone:** +91 83090 80424
-**Registered Address:** 602/1, PEERLACHAVADI STREET, Srikalahasti, Chittoor - 517644, Andhra Pradesh, India
+**Official Email:** contact@ykyash.in
 
 ---
 
@@ -288,7 +279,7 @@ Due to the digital and immediately accessible nature of downloadable goods (temp
 ---
 
 ### 3. REFUND PROCESSING & TIMELINES
-- To request a refund, email **syaswanthkumar2006@gmail.com** with your Transaction ID (\`txnid\`) and reason for the request.
+- To request a refund, email **contact@ykyash.in** with your Transaction ID (\`txnid\`) and reason for the request.
 - Approved refunds are credited directly to the original payment source (UPI ID, Debit/Credit Card, or Bank Account) within **5 to 7 business days** in accordance with Indian banking norms.`
   },
 
@@ -299,8 +290,7 @@ Due to the digital and immediately accessible nature of downloadable goods (temp
     content: `# SHIPPING AND DELIVERY POLICY (DIGITAL GOODS)
 **Domain:** https://ykyash.in
 **Proprietor:** S. Yaswanth Kumar (YK Yash)
-**Official Email:** syaswanthkumar2006@gmail.com | **Phone:** +91 83090 80424
-**Registered Address:** 602/1, PEERLACHAVADI STREET, Srikalahasti, Chittoor - 517644, Andhra Pradesh, India
+**Official Email:** contact@ykyash.in
 **Last Updated:** August 18, 2026
 
 ---
@@ -324,6 +314,6 @@ Due to the digital and immediately accessible nature of downloadable goods (temp
 If you do not receive your digital download link or email confirmation within 15 minutes of completing your transaction:
 1. Check your email Spam/Promotions folder.
 2. Visit the [Payment Status](/payment/success) portal with your Transaction ID.
-3. Contact our support team at **syaswanthkumar2006@gmail.com** or **+91 83090 80424** for instant manual link re-issuance.`
+3. Contact our support team at **contact@ykyash.in** for instant manual link re-issuance.`
   }
 };

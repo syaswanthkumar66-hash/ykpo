@@ -562,7 +562,7 @@ export default function ControlPanel() {
                         type="email"
                         value={adminEmailInput}
                         onChange={(e) => setAdminEmailInput(e.target.value)}
-                        placeholder="e.g. syaswanthkumar2006@gmail.com"
+                        placeholder="e.g. contact@ykyash.in"
                         required
                         className="w-full rounded-xl px-4 py-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#39AEA9] transition-all"
                         style={{ backgroundColor: '#f8fafc', border: '1.5px solid #cbd5e1', color: '#0f172a' }}

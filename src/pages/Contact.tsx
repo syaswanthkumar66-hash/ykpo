@@ -105,30 +105,6 @@ export default function Contact() {
                 </div>
 
                 <div className="flex items-start gap-3 pt-3 border-t border-[#557B83]/15">
-                  <Phone className="w-5 h-5 text-[#39AEA9] shrink-0 mt-0.5" />
-                  <div>
-                    <span className="text-xs uppercase font-bold tracking-wider text-[#1D5C58] block mb-0.5 font-mono">
-                      Direct Helpline / WhatsApp
-                    </span>
-                    <a href={`tel:${MERCHANT_KYC_DETAILS.phone}`} className="text-[#12181A] hover:text-[#39AEA9] font-medium">
-                      {MERCHANT_KYC_DETAILS.phone}
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 pt-3 border-t border-[#557B83]/15">
-                  <MapPin className="w-5 h-5 text-[#39AEA9] shrink-0 mt-0.5" />
-                  <div>
-                    <span className="text-xs uppercase font-bold tracking-wider text-[#1D5C58] block mb-0.5 font-mono">
-                      Registered Physical Address
-                    </span>
-                    <p className="text-[#557B83] leading-relaxed text-xs">
-                      {MERCHANT_KYC_DETAILS.registeredAddress}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 pt-3 border-t border-[#557B83]/15">
                   <Clock className="w-5 h-5 text-[#39AEA9] shrink-0 mt-0.5" />
                   <div>
                     <span className="text-xs uppercase font-bold tracking-wider text-[#1D5C58] block mb-0.5 font-mono">
@@ -145,7 +121,7 @@ export default function Contact() {
             {/* Grievance Redressal Card */}
             <div className="glass-panel rounded-2xl p-5 text-xs text-[#557B83] space-y-2 border border-[#557B83]/15">
               <strong className="text-[#12181A] block font-bold font-mono">Grievance & Customer Redressal:</strong>
-              <p>For any billing, PayU payment queries, or digital download issues, reach our Grievance Officer at <a href={`mailto:${MERCHANT_KYC_DETAILS.officialEmail}`} className="text-[#39AEA9] underline font-medium">{MERCHANT_KYC_DETAILS.officialEmail}</a>. Response within 24 hours.</p>
+              <p>For any inquiries or PayU payment assistance, reach our desk directly at <a href={`mailto:${MERCHANT_KYC_DETAILS.officialEmail}`} className="text-[#39AEA9] underline font-medium">{MERCHANT_KYC_DETAILS.officialEmail}</a>. Response within 24 hours.</p>
             </div>
           </div>
 

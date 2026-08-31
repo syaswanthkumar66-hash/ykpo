@@ -105,7 +105,6 @@ QUICK SETUP INSTRUCTIONS:
 
 For priority engineering support:
 Support Email: ${MERCHANT_KYC_DETAILS.officialEmail}
-Support Line: ${MERCHANT_KYC_DETAILS.phone}
 
 Thank you for engineering with YK Yash!
 ===================================================================

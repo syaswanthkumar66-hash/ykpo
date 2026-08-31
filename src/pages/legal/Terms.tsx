@@ -11,8 +11,7 @@ export default function Terms() {
         <div className="glass-panel p-5 rounded-2xl text-xs sm:text-sm text-[#557B83] space-y-1.5 border border-[#557B83]/20">
           <p><strong className="text-[#12181A]">Domain:</strong> {MERCHANT_KYC_DETAILS.domain}</p>
           <p><strong className="text-[#12181A]">Proprietor / Service Provider:</strong> {MERCHANT_KYC_DETAILS.legalName} ({MERCHANT_KYC_DETAILS.businessName})</p>
-          <p><strong className="text-[#12181A]">Official Contact:</strong> {MERCHANT_KYC_DETAILS.officialEmail} | {MERCHANT_KYC_DETAILS.phone}</p>
-          <p><strong className="text-[#12181A]">Registered Address:</strong> {MERCHANT_KYC_DETAILS.registeredAddress}</p>
+          <p><strong className="text-[#12181A]">Official Contact:</strong> {MERCHANT_KYC_DETAILS.officialEmail}</p>
         </div>
 
         <div>

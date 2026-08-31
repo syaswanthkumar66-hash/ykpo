@@ -65,32 +65,23 @@ export function Footer() {
           {/* Merchant KYC Details */}
           <div>
             <h4 className="text-[#12181A] font-bold text-xs uppercase tracking-widest mb-4 font-mono">
-              Merchant KYC Disclosures
+              Merchant Disclosures
             </h4>
             <div className="space-y-3 text-xs">
               <div className="flex items-start gap-2.5">
                 <Mail className="w-4 h-4 text-[#39AEA9] shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-[#12181A]">Official Inquiries:</p>
+                  <p className="font-semibold text-[#12181A]">Official Email:</p>
                   <a href={`mailto:${MERCHANT_KYC_DETAILS.officialEmail}`} className="underline text-[#39AEA9] hover:text-[#12181A]">
                     {MERCHANT_KYC_DETAILS.officialEmail}
                   </a>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
-                <Phone className="w-4 h-4 text-[#39AEA9] shrink-0 mt-0.5" />
+                <CheckCircle2 className="w-4 h-4 text-[#39AEA9] shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-[#12181A]">Helpline / WhatsApp:</p>
-                  <a href={`tel:${MERCHANT_KYC_DETAILS.phone}`} className="text-[#557B83] hover:text-[#12181A]">
-                    {MERCHANT_KYC_DETAILS.phone}
-                  </a>
-                </div>
-              </div>
-              <div className="flex items-start gap-2.5">
-                <MapPin className="w-4 h-4 text-[#39AEA9] shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-[#12181A]">Registered Address:</p>
-                  <p className="text-[#557B83] leading-relaxed">{MERCHANT_KYC_DETAILS.registeredAddress}</p>
+                  <p className="font-semibold text-[#12181A]">Support Availability:</p>
+                  <p className="text-[#557B83]">{MERCHANT_KYC_DETAILS.operatingHours}</p>
                 </div>
               </div>
             </div>
