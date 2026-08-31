@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../supabase';
+import { subscribeToPush, savePushSubscription } from '../utils/push';
 import { 
   ArrowLeft, 
   User, 
@@ -260,6 +261,23 @@ export default function ControlPanel() {
       setAdminSessionToken(data.token);
       setOtpStep('unlocked');
       setGateSuccessMsg(null);
+
+      // Auto-subscribe Admin device to Push Notifications for background payment alerts
+      if ('Notification' in window) {
+        if (Notification.permission === 'granted') {
+          subscribeToPush(true).then(sub => {
+            if (sub) savePushSubscription(sub, adminEmailInput.trim()).catch(console.error);
+          }).catch(console.error);
+        } else if (Notification.permission === 'default') {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              subscribeToPush(true).then(sub => {
+                if (sub) savePushSubscription(sub, adminEmailInput.trim()).catch(console.error);
+              }).catch(console.error);
+            }
+          });
+        }
+      }
     } catch (err: any) {
       setGateError(err.message);
     } finally {

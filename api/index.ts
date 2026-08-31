@@ -1094,29 +1094,41 @@ const handlePayUWebhook = async (req: express.Request, res: express.Response) =>
           updated_at: new Date().toISOString()
         }], { onConflict: 'txnid' });
 
-        // If payment is SUCCESSFUL, broadcast instant Web Push Notification to Admin and Customer devices
-        if (normalizedStatus === 'success') {
-          const formattedAmt = `₹${Number(amount || 0).toLocaleString('en-IN')}`;
-          const notifPayload = JSON.stringify({
-            title: `💰 Payment Received (${formattedAmt})`,
-            body: `Received from ${firstname || 'Customer'} for ${productinfo}. TXN: ${txnid}`,
-            url: '/control-panel'
-          });
+        // Broadcast Instant Web Push Notification to Admin for EVERY payment event (Success, Failure, Pending)
+        const formattedAmt = `₹${Number(amount || 0).toLocaleString('en-IN')}`;
+        let notifTitle = '';
+        let notifBody = '';
 
-          // Fetch all active push subscribers from Supabase and broadcast
-          const { data: subscribers } = await supabaseServer.from('push_subscriptions').select('subscription');
-          if (subscribers && subscribers.length > 0) {
-            for (const subRow of subscribers) {
-              try {
-                const subObj = typeof subRow.subscription === 'string' ? JSON.parse(subRow.subscription) : subRow.subscription;
-                if (subObj && subObj.endpoint) {
-                  await webpush.sendNotification(subObj, notifPayload).catch((e: any) => {
-                    console.warn('[WebPush Webhook Notice]:', e.message);
-                  });
-                }
-              } catch (e) {
-                // ignore individual subscription parse error
+        if (normalizedStatus === 'success') {
+          notifTitle = `✅ Payment Received: ${formattedAmt}`;
+          notifBody = `Payer: ${firstname || 'Customer'} | Product: ${productinfo} | TXN: ${txnid}`;
+        } else if (normalizedStatus === 'failure') {
+          notifTitle = `❌ Payment Failed: ${formattedAmt}`;
+          notifBody = `Declined/Dropped for ${firstname || 'Customer'} | TXN: ${txnid}`;
+        } else {
+          notifTitle = `⏳ Payment Pending: ${formattedAmt}`;
+          notifBody = `Status: ${status} for ${firstname || 'Customer'} | TXN: ${txnid}`;
+        }
+
+        const notifPayload = JSON.stringify({
+          title: notifTitle,
+          body: notifBody,
+          url: '/control-panel'
+        });
+
+        // Broadcast to all active admin devices stored in Supabase
+        const { data: subscribers } = await supabaseServer.from('push_subscriptions').select('subscription');
+        if (subscribers && subscribers.length > 0) {
+          for (const subRow of subscribers) {
+            try {
+              const subObj = typeof subRow.subscription === 'string' ? JSON.parse(subRow.subscription) : subRow.subscription;
+              if (subObj && subObj.endpoint) {
+                await webpush.sendNotification(subObj, notifPayload).catch((e: any) => {
+                  console.warn('[WebPush Webhook Notice]:', e.message);
+                });
               }
+            } catch (e) {
+              // ignore individual subscription error
             }
           }
         }
