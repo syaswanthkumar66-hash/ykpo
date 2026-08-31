@@ -161,14 +161,6 @@ export function Navbar() {
               Client Login
             </button>
           )}
-
-          <Link
-            to="/control-panel"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] text-white hover:brightness-105 transition-all font-sans shadow-[0_3px_12px_rgba(57,174,169,0.25)]"
-          >
-            <CreditCard className="w-3.5 h-3.5" />
-            PayU Dashboard
-          </Link>
         </div>
 
         {/* Mobile Menu Button */}
@@ -208,13 +200,27 @@ export function Navbar() {
           </div>
 
           <div className="pt-3 border-t border-[#557B83]/15">
-            <Link
-              to="/control-panel"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-[#1D5C58] to-[#39AEA9] text-white flex items-center justify-center gap-1.5"
-            >
-              <CreditCard className="w-3.5 h-3.5" /> PayU Dashboard
-            </Link>
+            {user ? (
+              <button
+                onClick={() => {
+                  logout();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider bg-red-50 text-red-700 border border-red-200"
+              >
+                Logout ({user.email.split('@')[0]})
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  openAuthModal();
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider bg-[#12181A] text-white flex items-center justify-center gap-1.5"
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-[#39AEA9]" /> Client Login
+              </button>
+            )}
           </div>
         </div>
       )}
